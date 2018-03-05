@@ -1,4 +1,4 @@
-package com.zhixin.roav.vpnadaptercore;
+package com.minhui.vpn;
 
 
 import java.io.FileDescriptor;

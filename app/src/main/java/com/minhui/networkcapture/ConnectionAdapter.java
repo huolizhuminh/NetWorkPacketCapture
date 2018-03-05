@@ -1,4 +1,4 @@
-package com.zhixin.roav.vpnadapter;
+package com.minhui.networkcapture;
 
 import android.content.Context;
 import android.view.View;
@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import com.zhixin.roav.vpnadaptercore.NetConnection;
+import com.minhui.vpn.NetConnection;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

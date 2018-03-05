@@ -1,7 +1,6 @@
-package com.zhixin.roav.vpnadaptercore;
+package com.minhui.vpn;
 
 import android.net.VpnService;
-import android.renderscript.ScriptIntrinsicYuvToRGB;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -127,13 +126,7 @@ class UDPConnection {
         try {
             channel = DatagramChannel.open();
             vpnService.protect(channel.socket());
-            int bindResult;
-            if (!VPNConnectManager.getInstance().isDeviceAddress(destinationAddress.getHostAddress())) {
-                bindResult = SocketUtils.bindSocket(channel.socket(), VPNConnectManager.getInstance().getCellularNetId());
-            } else {
-                bindResult = SocketUtils.bindSocket(channel.socket(), VPNConnectManager.getInstance().getWifiNetID());
-            }
-            VPNLog.i(TAG, "bind Socket result is :" + bindResult + "ipAndPort is " + ipAndPort);
+            VPNLog.i(TAG, "bind Socket result is :" + "ipAndPort is " + ipAndPort);
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(destinationAddress, destinationPort));
             selector.wakeup();

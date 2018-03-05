@@ -1,4 +1,4 @@
-package com.zhixin.roav.vpnadaptercore;
+package com.minhui.vpn;
 /**
  * Created by minhui.zhu on 2017/6/24.
  * Copyright © 2017年 Oceanwing. All rights reserved.
@@ -363,13 +363,7 @@ class TCPConnection {
         try {
             channel = SocketChannel.open();
             Socket socket = channel.socket();
-            int bindResult;
-            if (!VPNConnectManager.getInstance().isDeviceAddress(destinationAddress.getHostAddress())) {
-                bindResult = SocketUtils.bindSocket(channel.socket(), VPNConnectManager.getInstance().getCellularNetId());
-            } else {
-                bindResult = SocketUtils.bindSocket(channel.socket(), VPNConnectManager.getInstance().getWifiNetID());
-            }
-            Log.i(TAG, "bind Socket result is :" + bindResult + "ipAndPort is " + ipAndPort);
+            Log.i(TAG, "bind Socket result is :" + "ipAndPort is " + ipAndPort);
             channel.configureBlocking(false);
             vpnService.protect(socket);
             Log.d(TAG, "init conn  :" + ipAndPort + "  init mySequenceNum  " + mySequenceNum);

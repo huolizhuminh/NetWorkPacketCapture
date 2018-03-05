@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-package com.zhixin.roav.vpnadapter;
+package com.minhui.networkcapture;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -35,11 +35,11 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.zhixin.roav.vpnadaptercore.LocalVPNService;
-import com.zhixin.roav.vpnadaptercore.LocalVpnInit;
-import com.zhixin.roav.vpnadaptercore.NetConnection;
-import com.zhixin.roav.vpnadaptercore.VPNConnectManager;
-import com.zhixin.roav.vpnadaptercore.VpnUtils;
+import com.minhui.vpn.LocalVPNService;
+import com.minhui.vpn.LocalVpnInit;
+import com.minhui.vpn.NetConnection;
+import com.minhui.vpn.VPNConnectManager;
+import com.minhui.vpn.VpnUtils;
 
 import java.util.List;
 import java.util.Timer;

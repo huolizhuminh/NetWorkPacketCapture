@@ -7,7 +7,7 @@
     android:paddingLeft="15dp"
     android:paddingRight="15dp"
     android:paddingTop="15dp"
-    tools:context=".LocalVPN">
+    tools:context="com.minhui.networkcapture.LocalVPN">
 
     <TextView
         android:id="@+id/package_id"
