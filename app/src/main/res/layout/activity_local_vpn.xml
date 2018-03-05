@@ -1,0 +1,40 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:paddingBottom="15dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    android:paddingTop="15dp"
+    tools:context=".LocalVPN">
+
+    <TextView
+        android:id="@+id/package_id"
+        android:layout_width="match_parent"
+        android:layout_height="40dp" />
+
+    <Button
+        android:id="@+id/select_package"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="SelectPackage" />
+
+    <Button
+        android:id="@+id/vpn"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:enabled="false"
+        android:text="start vpn" />
+
+    <TextView
+        android:id="@+id/summer_state"
+        android:layout_width="fill_parent"
+        android:layout_height="60dp" />
+
+    <ListView
+        android:id="@+id/channel_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>
