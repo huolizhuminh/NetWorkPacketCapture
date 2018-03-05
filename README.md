@@ -9,7 +9,9 @@
 *It shows the state of Network Connection which is established by your selected client.
 ## step
 * select App client.
-* open the VPN. 
+* open the VPN.
+![Image text](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/select.png) 
+
 
 
 
