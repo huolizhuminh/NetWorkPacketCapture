@@ -18,9 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LocalVPNService extends VpnService {
-    public static final String ACTION_START_VPN = "com.zhixin.roav.START_VPN";
-    public static final String ACTION_CLOSE_VPN = "com.zhixin.roav.CLOSE_VPN";
-    private static final String ROAV_APP = "com.zhixin.roav.cam";
+    public static final String ACTION_START_VPN = "com.minhui.START_VPN";
+    public static final String ACTION_CLOSE_VPN = "com.minhui.roav.CLOSE_VPN";
     private static final String FACEBOOK_APP = "com.facebook.katana";
     private static final String YOUTUBE_APP = "com.google.android.youtube";
     private static final String GOOGLE_MAP_APP = "com.google.android.apps.maps";
