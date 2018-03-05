@@ -10,7 +10,8 @@
 ## step
 * select App client.
 * open the VPN.
-![Image text](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/select.png) 
+## use
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/result.png) 
 
 
 
