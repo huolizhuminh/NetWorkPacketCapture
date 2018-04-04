@@ -6,7 +6,7 @@
 * 选择所有抓取数据包的客户端。
 * 打开VPN。
 ## Function:
-*It shows the state of Network Connection which is established by your selected client.
+* It shows the state of Network Connection which is established by your selected client.
 ## step
 * select App client.
 * open the VPN.

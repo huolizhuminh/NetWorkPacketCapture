@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by minhui.zhu on 2017/8/21.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 public class VPNClient implements CloseableRun {

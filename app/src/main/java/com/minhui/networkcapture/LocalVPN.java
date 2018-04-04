@@ -39,7 +39,6 @@ import com.minhui.vpn.LocalVPNService;
 import com.minhui.vpn.LocalVpnInit;
 import com.minhui.vpn.NetConnection;
 import com.minhui.vpn.VPNConnectManager;
-import com.minhui.vpn.VpnUtils;
 
 import java.util.List;
 import java.util.Timer;
@@ -157,7 +156,7 @@ public class LocalVPN extends Activity {
             startTimer();
             VPNConnectManager.getInstance().resetNum();
         } else if (requestCode == REQUEST_WRITE && resultCode == RESULT_OK) {
-            VPNConnectManager.getInstance().initNetWork();
+           // VPNConnectManager.getInstance().initNetWork();
         } else if (requestCode == REQUEST_PACKAGE && resultCode == RESULT_OK) {
             selectPackage = data.getStringExtra(PackageListActivity.SELECT_PACKAGE);
             packageId.setText(selectPackage);
@@ -171,19 +170,20 @@ public class LocalVPN extends Activity {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                final List<NetConnection> allNetConnection = VPNConnectManager.getInstance().getAllNetConnection();
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        refreshView();
+                        refreshView(allNetConnection);
                     }
                 });
             }
         }, 1000, 1000);
     }
 
-    private void refreshView() {
+    private void refreshView(List<NetConnection> allNetConnection) {
         VPNConnectManager vpnConnectManager = VPNConnectManager.getInstance();
-        List<NetConnection> allNetConnection = vpnConnectManager.getAllNetConnection();
+
         if (allNetConnection == null || allNetConnection.isEmpty()) {
             return;
         }
@@ -216,12 +216,7 @@ public class LocalVPN extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        //初始化ip白名单
-        if (VpnUtils.needCheckWriteSetting() && !Settings.System.canWrite(this)) {
-            startSetPermissionDialog();
-        } else {
-            VPNConnectManager.getInstance().initNetWork();
-        }
+
 
 
     }
@@ -230,7 +225,6 @@ public class LocalVPN extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        VPNConnectManager.getInstance().unRegisterNetWorkCallBacks();
 
     }
 

@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by minhui.zhu on 2017/7/13.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 class VPNServer implements CloseableRun {
@@ -284,6 +284,7 @@ class VPNServer implements CloseableRun {
                 connection.sendNum = tcpConnection.sendNum;
                 connection.sendPacketNum = tcpConnection.sendPacketNum;
                 connection.refreshTime = tcpConnection.refreshTime;
+                  connection.hostName=tcpConnection.getHostName();
                 netConnections.add(connection);
             }
         }
@@ -299,6 +300,7 @@ class VPNServer implements CloseableRun {
                 connection.sendNum = udpConnection.sendNum;
                 connection.sendPacketNum = udpConnection.sendPacketNum;
                 connection.refreshTime = udpConnection.refreshTime;
+                connection.hostName = udpConnection.getHostName();
                 netConnections.add(connection);
             }
         }

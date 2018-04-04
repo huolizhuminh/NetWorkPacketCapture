@@ -1,9 +1,10 @@
 package com.minhui.vpn;
 /**
  * Created by minhui.zhu on 2017/6/24.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -12,7 +13,7 @@ import java.nio.ByteBuffer;
  * Representation of an IP Packet
  */
 
-class Packet {
+class Packet  implements Serializable {
     static final int IP4_HEADER_SIZE = 20;
     static final int TCP_HEADER_SIZE = 20;
     static final int UDP_HEADER_SIZE = 8;
@@ -28,6 +29,34 @@ class Packet {
     boolean releaseAfterWritingToDevice = true;
     boolean cancelSending = false;
     int playLoadSize = 0;
+
+    public IP4Header getIp4Header() {
+        return ip4Header;
+    }
+
+    public TCPHeader getTcpHeader() {
+        return tcpHeader;
+    }
+
+    public UDPHeader getUdpHeader() {
+        return udpHeader;
+    }
+
+    public ByteBuffer getBackingBuffer() {
+        return backingBuffer;
+    }
+
+    public boolean isReleaseAfterWritingToDevice() {
+        return releaseAfterWritingToDevice;
+    }
+
+    public boolean isCancelSending() {
+        return cancelSending;
+    }
+
+    public int getPlayLoadSize() {
+        return playLoadSize;
+    }
 
     Packet(ByteBuffer buffer) throws UnknownHostException {
         this.ip4Header = new IP4Header(buffer);
@@ -230,7 +259,7 @@ class Packet {
     }
 
 
-    static class IP4Header {
+    static class IP4Header implements  Serializable {
         public byte version;
         byte IHL;
         int headerLength;
@@ -359,7 +388,7 @@ class Packet {
         }
     }
 
-    static class TCPHeader {
+    static class TCPHeader implements Serializable{
         static final int FIN = 0x01; //会话结束
         static final int SYN = 0x02; //开始会话请求
         static final int RST = 0x04;  //复位 中断一个链接
@@ -490,7 +519,7 @@ class Packet {
         }
     }
 
-    static class UDPHeader {
+    static class UDPHeader implements  Serializable {
         int sourcePort;
         int destinationPort;
 

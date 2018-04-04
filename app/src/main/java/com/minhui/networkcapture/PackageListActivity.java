@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author minhui.zhu
  *         Created by minhui.zhu on 2018/2/27.
- *         Copyright © 2017年 Oceanwing. All rights reserved.
+ *         Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 public class PackageListActivity extends Activity {

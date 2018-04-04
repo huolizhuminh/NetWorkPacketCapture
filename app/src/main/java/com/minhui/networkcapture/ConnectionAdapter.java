@@ -15,13 +15,14 @@ import java.util.List;
 /**
  * @author minhui.zhu
  *         Created by minhui.zhu on 2018/2/28.
- *         Copyright © 2017年 Oceanwing. All rights reserved.
+ *         Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 public class ConnectionAdapter extends BaseAdapter {
     private final Context context;
     private List<NetConnection> netConnections;
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:MM:SS");
+
     ConnectionAdapter(Context context, List<NetConnection> netConnections) {
         this.context = context;
         this.netConnections = netConnections;
@@ -56,7 +57,7 @@ public class ConnectionAdapter extends BaseAdapter {
         StringBuilder stringBuilder = new StringBuilder();
         Date date = new Date(connection.refreshTime);
         String time = simpleDateFormat.format(date);
-     //   String time = "" + date.getMinutes() + ":" + date.getSeconds();
+        //   String time = "" + date.getMinutes() + ":" + date.getSeconds();
 
         String itemString = stringBuilder
                 .append(connection.ipAndPort)
@@ -70,6 +71,8 @@ public class ConnectionAdapter extends BaseAdapter {
                 .append(connection.receivePacketNum)
                 .append(",receiveNum:")
                 .append(connection.receiveNum)
+                .append(",hostName")
+                .append(connection.hostName)
                 .toString();
         item.setText(itemString);
         return convertView;

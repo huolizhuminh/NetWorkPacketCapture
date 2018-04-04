@@ -10,7 +10,7 @@ import java.util.Random;
 
 /**
  * Created by minhui.zhu on 2017/6/14.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 public class SocketUtils {
@@ -22,14 +22,6 @@ public class SocketUtils {
 
     }
 
-
-
-    static int getNetID(Network requestNetwork) throws Exception {
-        Class networkClass = Class.forName("android.net.Network");
-        Field netIdField = networkClass.getDeclaredField("netId");
-        netIdField.setAccessible(true);
-        return netIdField.getInt(requestNetwork);
-    }
 
     static void closeResources(Closeable... resources) {
         for (Closeable resource : resources) {

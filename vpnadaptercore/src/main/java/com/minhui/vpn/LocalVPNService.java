@@ -1,7 +1,7 @@
 package com.minhui.vpn;
 /**
  * Created by minhui.zhu on 2017/6/24.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 import android.content.Intent;
@@ -62,9 +62,9 @@ public class LocalVPNService extends VpnService {
         builder.addRoute(VPN_ROUTE, 0);
         //某些国外的手机例如google pixel 默认的dns解析器地址不是8.8.8.8 ，不设置会出错
         builder.addDnsServer(GOOGLE_DNS_FIRST);
+        builder.addDnsServer(CHINA_DNS_FIRST);
         builder.addDnsServer(GOOGLE_DNS_SECOND);
         builder.addDnsServer(AMERICA);
-        builder.addDnsServer(CHINA_DNS_FIRST);
         builder.setMtu(1280);
         try {
             if (selectPackage != null) {

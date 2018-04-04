@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by minhui.zhu on 2017/7/11.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 class UDPConnection {
@@ -37,7 +37,7 @@ class UDPConnection {
     public long receiveNum;
     public long receivePacketNum;
     public long sendPacketNum;
-    public long refreshTime= System.currentTimeMillis();
+    public long refreshTime = System.currentTimeMillis();
 
     public UDPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
         this.vpnService = vpnService;
@@ -52,6 +52,21 @@ class UDPConnection {
                 processKey(key);
             }
         };
+
+    }
+
+    private String hostName;
+
+    public String getHostName() {
+        if (hostName != null) {
+            return hostName;
+        }
+        try {
+            hostName = VPNConnectManager.getInstance().getHostName(referencePacket.ip4Header.sourceAddress);
+        } catch (Exception e) {
+
+        }
+        return hostName;
 
     }
 
@@ -89,7 +104,7 @@ class UDPConnection {
             receiveBuffer.position(HEADER_SIZE + readBytes);
             outputQueue.offer(newPacket);
             VPNLog.d(TAG, "read  data :readBytes:" + readBytes + "ipAndPort:" + ipAndPort);
-            VPNConnectManager.getInstance().addReceiveNum(readBytes);
+            VPNConnectManager.getInstance().addReceiveNum(newPacket,readBytes);
             receivePacketNum++;
             receiveNum = receiveNum + readBytes;
             refreshTime = System.currentTimeMillis();
@@ -106,7 +121,7 @@ class UDPConnection {
         try {
             ByteBuffer payloadBuffer = toNetWorkPacket.backingBuffer;
 
-            VPNConnectManager.getInstance().addSendNum(payloadBuffer.limit() - payloadBuffer.position());
+            VPNConnectManager.getInstance().addSendNum(toNetWorkPacket,payloadBuffer.limit() - payloadBuffer.position());
             sendPacketNum++;
             sendNum = sendNum + payloadBuffer.limit() - payloadBuffer.position();
             refreshTime = System.currentTimeMillis();

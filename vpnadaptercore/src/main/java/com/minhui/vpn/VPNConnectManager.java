@@ -11,20 +11,24 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
  * Created by minhui.zhu on 2017/7/19.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 public class VPNConnectManager {
-    private int cellularNetId = -1;
-    private int wifiNetID = -1;
     private static final String TAG = VPNConnectManager.class.getSimpleName();
-    private ConnectivityManager.NetworkCallback cellularCallBack;
-    private ConnectivityManager.NetworkCallback wifiCallBack;
     private ConnectivityManager mConnectivityManager;
     private String setDeviceAddress;
     private String connectIPAddress;
@@ -32,9 +36,39 @@ public class VPNConnectManager {
     private long totalSendByteNum = 0;
     private int totalReceivePacket = 0;
     private long totalReceiveByteNum = 0;
+    Map<String, String> hosts = new HashMap<>();
+    private ExecutorService executor;
+    List<VPNListener> listeners = new ArrayList<>();
 
-    public boolean isWifiAvailable() {
-        return wifiNetID != -1;
+    public String getHostName(final InetAddress sourceAddress) {
+        if (executor == null) {
+            executor = Executors.newSingleThreadExecutor();
+        }
+        String hostName = hosts.get(sourceAddress.getHostAddress());
+        if (hostName == null) {
+            executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                        String hostName = sourceAddress.getHostName();
+                        hosts.put(sourceAddress.getHostAddress(), hostName);
+
+                    } catch (Exception e) {
+                        Log.d(TAG, "failed to getHostName" + e.getMessage());
+                    }
+                }
+            });
+        }
+        return hostName;
+    }
+
+    public void registerListener(VPNListener listener) {
+        listeners.add(listener);
+    }
+
+    public void unRegisterListener(VPNListener listener) {
+        listeners.remove(listener);
     }
 
     private static class Inner {
@@ -56,14 +90,27 @@ public class VPNConnectManager {
         return totalSendPacket;
     }
 
-    public void addSendNum(int sendNum) {
+    void addSendNum(Packet packet, int sendNum) {
         totalSendByteNum = totalSendByteNum + sendNum;
         totalSendPacket++;
+        if (listeners.isEmpty()) {
+            return;
+        }
+        VPNListener[] vpnListeners = new VPNListener[listeners.size()];
+        listeners.toArray(vpnListeners);
+        for (VPNListener listener : vpnListeners) {
+            listener.onPacketSend(packet);
+        }
     }
 
-    public void addReceiveNum(int receiveNum) {
+    void addReceiveNum(Packet packet, int receiveNum) {
         totalReceiveByteNum = totalReceiveByteNum + receiveNum;
         totalReceivePacket++;
+        VPNListener[] vpnListeners = new VPNListener[listeners.size()];
+        listeners.toArray(vpnListeners);
+        for (VPNListener listener : vpnListeners) {
+            listener.onPacketReceive(packet);
+        }
     }
 
     public long getTotalSendNum() {
@@ -126,115 +173,5 @@ public class VPNConnectManager {
                 + ((i >> 24) & 0xFF);
     }
 
-    int getCellularNetId() {
-        return cellularNetId;
-    }
 
-    public void initNetWork() {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-        initCellular();
-        initWifi();
-    }
-
-    private void initWifi() {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-        VPNLog.d(TAG, "initWifi");
-        if (wifiCallBack != null) {
-            unRegisterNetworkCallBack(wifiCallBack);
-        }
-        final NetworkRequest networkRequest = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .build();
-        wifiCallBack = new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network requestNetwork) {
-                try {
-                    wifiNetID = SocketUtils.getNetID(requestNetwork);
-                    VPNLog.i(TAG, "wifi is  available wifi net id is:" + wifiNetID);
-                } catch (Exception e) {
-                    VPNLog.e(TAG, "failed to get wifi netId error is" + e);
-                }
-                refreshConnectDeviceIP();
-            }
-
-            @Override
-            public void onLost(Network network) {
-                wifiNetID = -1;
-                VPNLog.i(TAG, "wifi is  lost");
-            }
-        };
-        mConnectivityManager.requestNetwork(networkRequest, wifiCallBack);
-    }
-
-    /*对蜂窝网络的监听并没有打开app就一直监听，主要是为了考虑兼容华为的某些机型。*/
-    private void initCellular() {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-        VPNLog.d(TAG, "initCellular");
-        if (cellularCallBack != null) {
-            unRegisterNetworkCallBack(cellularCallBack);
-        }
-        final NetworkRequest celluarNetworkRequest = new NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-                .build();
-        cellularCallBack = new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(Network requestNetwork) {
-                try {
-                    cellularNetId = SocketUtils.getNetID(requestNetwork);
-                    //  EventBus.getDefault().post(new MobileAvailableChangeVo());
-                    VPNLog.i(TAG, "mobile is Available cellularNetId is :" + cellularNetId);
-                } catch (Exception e) {
-                    VPNLog.e(TAG, "failed to get mobile net id error is" + e);
-                }
-
-            }
-
-            @Override
-            public void onLost(Network network) {
-                cellularNetId = -1;
-                //  EventBus.getDefault().post(new MobileAvailableChangeVo());
-                VPNLog.i(TAG, "mobile is  Lost");
-            }
-        };
-        mConnectivityManager.requestNetwork(celluarNetworkRequest, cellularCallBack);
-
-    }
-
-    int getWifiNetID() {
-        return wifiNetID;
-    }
-
-    public boolean isMobileNetAvailable() {
-        return cellularNetId != -1;
-    }
-
-    public void unRegisterNetWorkCallBacks() {
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-        unRegisterNetworkCallBack(wifiCallBack);
-        unRegisterNetworkCallBack(cellularCallBack);
-    }
-
-    private void unRegisterNetworkCallBack(ConnectivityManager.NetworkCallback callback) {
-        if (callback == null) {
-            return;
-        }
-        if (Build.VERSION.SDK_INT < 21) {
-            return;
-        }
-        try {
-            mConnectivityManager.unregisterNetworkCallback(callback);
-        } catch (Exception e) {
-            VPNLog.w(TAG, "failed to unregisterNetworkCallback" + e.getStackTrace());
-        }
-    }
 }

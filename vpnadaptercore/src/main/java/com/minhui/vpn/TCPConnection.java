@@ -1,7 +1,7 @@
 package com.minhui.vpn;
 /**
  * Created by minhui.zhu on 2017/6/24.
- * Copyright © 2017年 Oceanwing. All rights reserved.
+ * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
 import android.net.VpnService;
@@ -61,6 +61,7 @@ class TCPConnection {
     public long receivePacketNum;
     public long refreshTime = System.currentTimeMillis();
 
+
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         this.vpnService = vpnService;
         this.selector = selector;
@@ -79,6 +80,21 @@ class TCPConnection {
                 processKey(key);
             }
         };
+
+    }
+
+    private String hostName;
+
+    public String getHostName() {
+        if (hostName != null) {
+            return hostName;
+        }
+        try {
+            hostName = VPNConnectManager.getInstance().getHostName(referencePacket.ip4Header.sourceAddress);
+        } catch (Exception e) {
+
+        }
+        return hostName;
 
     }
 
@@ -111,7 +127,8 @@ class TCPConnection {
                 while (payloadBuffer.hasRemaining()) {
                     channel.write(payloadBuffer);
                 }
-                VPNConnectManager.getInstance().addSendNum(playLoadSize);
+                VPNConnectManager.getInstance().addSendNum(toNetPacket, playLoadSize);
+
                 sendNum = sendNum + playLoadSize;
                 sendPacketNum++;
                 refreshTime = System.currentTimeMillis();
@@ -195,7 +212,7 @@ class TCPConnection {
             putToDevicePacket(mySequenceNum, packet);
             mySequenceNum += readBytes; // Next sequence number
             receiveBuffer.position(HEADER_SIZE + readBytes);
-            VPNConnectManager.getInstance().addReceiveNum(readBytes);
+            VPNConnectManager.getInstance().addReceiveNum(packet, readBytes);
             receiveNum = receiveNum + readBytes;
             receivePacketNum++;
             refreshTime = System.currentTimeMillis();
@@ -209,7 +226,6 @@ class TCPConnection {
         try {
             if (channel.finishConnect()) {
                 setStatus(TCPStatus.SYN_RECEIVED);
-                // TODO: Set MSS for receiving larger packets from the device
                 ByteBuffer responseBuffer = SocketUtils.getByteBuffer();
                 packet.updateTCPBuffer(responseBuffer, (byte) (Packet.TCPHeader.SYN | Packet.TCPHeader.ACK),
                         mySequenceNum, myAcknowledgementNum, 0);
