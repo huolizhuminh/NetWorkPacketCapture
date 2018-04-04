@@ -32,7 +32,7 @@ public class LocalVPNService extends VpnService {
     private static final String AMERICA = "208.67.222.222";
     private static final String HK_DNS_SECOND = "205.252.144.228";
     private static final String CHINA_DNS_FIRST = "114.114.114.114";
-    public static final String BROADCAST_VPN_STATE = "com.zhixin.roav.localvpn.VPN_STATE";
+    public static final String BROADCAST_VPN_STATE = "com.minhui.localvpn.VPN_STATE";
     public static final String SELECT_PACKAGE_ID = "select_protect_package_id";
     private static VpnService instance;
 
