@@ -133,6 +133,7 @@ public class LocalVPNService extends VpnService {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
         Log.i(TAG, "Stopped");
     }
 
@@ -143,6 +144,7 @@ public class LocalVPNService extends VpnService {
         closeRunnable(vpnServer);
         closeRunnable(vpnInPutRunnable);
         SocketUtils.closeResources(vpnInterface);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
         instance = null;
     }
 
