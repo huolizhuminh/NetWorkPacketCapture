@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">NetworkCapture</string>
+    <string name="app_name">VPNCapture</string>
+    <string name="all">all</string>
 </resources>

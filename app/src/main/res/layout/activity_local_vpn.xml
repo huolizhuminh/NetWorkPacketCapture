@@ -12,7 +12,10 @@
     <TextView
         android:id="@+id/package_id"
         android:layout_width="match_parent"
-        android:layout_height="40dp" />
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="@string/all"
+        />
 
     <Button
         android:id="@+id/select_package"

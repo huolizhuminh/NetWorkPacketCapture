@@ -47,10 +47,10 @@ import java.util.TimerTask;
 
 public class LocalVPN extends Activity {
     private static final int VPN_REQUEST_CODE = 101;
-    private static final int REQUEST_WRITE = 102;
     private static final int REQUEST_PACKAGE = 103;
     private static final String DATA_SAVE = "saveData";
     private static final String DEFAULT_PACKAGE_ID = "default_package_id";
+    private static final String DEFAULT_PACAGE_NAME = "default_package_name";
 
     private boolean waitingForVPNStart;
 
@@ -69,6 +69,7 @@ public class LocalVPN extends Activity {
     private ListView channelList;
     private SharedPreferences sharedPreferences;
     private String selectPackage;
+    private String selectName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,36 +104,12 @@ public class LocalVPN extends Activity {
         channelList = findViewById(R.id.channel_list);
         sharedPreferences = getSharedPreferences(DATA_SAVE, MODE_PRIVATE);
         selectPackage = sharedPreferences.getString(DEFAULT_PACKAGE_ID, null);
-        if (selectPackage != null) {
-            packageId.setText(selectPackage);
-            vpnButton.setEnabled(true);
-        }
+        selectName=sharedPreferences.getString(DEFAULT_PACAGE_NAME,null);
+        packageId.setText(selectName!=null?selectName:
+                selectPackage!=null?selectPackage:getString(R.string.all));
+        vpnButton.setEnabled(true);
     }
 
-    private void startSetPermissionDialog() {
-        new AlertDialog
-                .Builder(this)
-                .setTitle("network permission")
-                .setPositiveButton("setting", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startWrittingSetting();
-                    }
-                })
-                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                }).show();
-    }
-
-    private void startWrittingSetting() {
-        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-        intent.setData(Uri.parse("package:" + getPackageName()));
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivityForResult(intent, REQUEST_WRITE);
-    }
 
     private void startVPN() {
 
@@ -151,17 +128,26 @@ public class LocalVPN extends Activity {
             waitingForVPNStart = true;
             Intent intent = new Intent(this, LocalVPNService.class);
             intent.setAction(LocalVPNService.ACTION_START_VPN);
-            intent.putExtra(LocalVPNService.SELECT_PACKAGE_ID, packageId.getText().toString().trim());
+            if (selectPackage != null) {
+                intent.putExtra(LocalVPNService.SELECT_PACKAGE_ID, selectPackage.trim());
+            }
             startService(intent);
             startTimer();
             VPNConnectManager.getInstance().resetNum();
-        } else if (requestCode == REQUEST_WRITE && resultCode == RESULT_OK) {
-           // VPNConnectManager.getInstance().initNetWork();
         } else if (requestCode == REQUEST_PACKAGE && resultCode == RESULT_OK) {
-            selectPackage = data.getStringExtra(PackageListActivity.SELECT_PACKAGE);
-            packageId.setText(selectPackage);
+            PackageShowInfo showInfo = (PackageShowInfo) data.getParcelableExtra(PackageListActivity.SELECT_PACKAGE);
+            if(showInfo==null){
+                selectPackage=null;
+                selectName = null;
+            }else {
+                selectPackage=showInfo.packageName;
+                selectName=showInfo.appName;
+            }
+            packageId.setText(selectName!=null?selectName:
+                    selectPackage!=null?selectPackage:getString(R.string.all));
             vpnButton.setEnabled(true);
-            sharedPreferences.edit().putString(DEFAULT_PACKAGE_ID, selectPackage).apply();
+            sharedPreferences.edit().putString(DEFAULT_PACKAGE_ID, selectPackage)
+            .putString(DEFAULT_PACAGE_NAME,selectName).apply();
         }
     }
 
@@ -216,7 +202,6 @@ public class LocalVPN extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-
 
 
     }
