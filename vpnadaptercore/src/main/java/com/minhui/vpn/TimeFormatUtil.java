@@ -13,7 +13,7 @@ import java.util.Date;
 public class TimeFormatUtil {
 
     public static String formatHHMMSSMM(long time) {
-        String formart = "HH:mm:ss:ms";
+        String formart = "HH:mm:ss:s";
         Date date = new Date(time);
         DateFormat dateFormat = new SimpleDateFormat(formart);
         return dateFormat.format(date);

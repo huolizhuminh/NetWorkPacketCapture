@@ -30,10 +30,10 @@
         android:enabled="false"
         android:text="start vpn" />
 
-    <TextView
+   <!-- <TextView
         android:id="@+id/summer_state"
         android:layout_width="fill_parent"
-        android:layout_height="60dp" />
+        android:layout_height="60dp" />-->
 
     <ListView
         android:id="@+id/channel_list"

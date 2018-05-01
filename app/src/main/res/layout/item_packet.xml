@@ -6,7 +6,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp">
+        android:layout_height="70dp">
 
         <ImageView
             android:id="@+id/select_icon"
@@ -57,7 +57,7 @@
         </RelativeLayout>
         <RelativeLayout
             android:id="@+id/net_container"
-            android:layout_width="200dp"
+            android:layout_width="220dp"
             android:layout_height="match_parent"
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
@@ -76,9 +76,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="16sp"
+                android:textSize="15sp"
                 android:layout_below="@id/app_name"
-                tools:text="TCP:12.21.43.12:8080 2323" />
+                android:singleLine="true"
+                tools:text="TCP:112.211.43.12:8080 2323" />
+            <TextView
+                android:id="@+id/url"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:layout_below="@id/net_state"
+                android:singleLine="true"
+                tools:text="http:baidu.com" />
         </RelativeLayout>
 
     </RelativeLayout>

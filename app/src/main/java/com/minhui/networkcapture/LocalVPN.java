@@ -59,7 +59,7 @@ public class LocalVPN extends Activity {
     private TextView packageId;
     private Timer timer;
     private Handler handler;
-    private TextView summerState;
+    //private TextView summerState;
     private ConnectionAdapter connectionAdapter;
     private ListView channelList;
     private SharedPreferences sharedPreferences;
@@ -83,7 +83,7 @@ public class LocalVPN extends Activity {
             }
         });
         packageId = findViewById(R.id.package_id);
-        summerState = findViewById(R.id.summer_state);
+      //  summerState = findViewById(R.id.summer_state);
         findViewById(R.id.select_package).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -168,11 +168,11 @@ public class LocalVPN extends Activity {
         if (allNetConnection == null || allNetConnection.isEmpty()) {
             return;
         }
-        String summerText = "TotalSendPacket" + vpnConnectManager.getTotalSendPacket()
+       /* String summerText = "TotalSendPacket" + vpnConnectManager.getTotalSendPacket()
                 + ",TotalSendByte:" + vpnConnectManager.getTotalSendNum()
                 + ",TotalReceivePacket:" + vpnConnectManager.getTotalReceivePacket()
                 + ",TotalReceiveByte:" + vpnConnectManager.getTotalReceiveByteNum();
-        summerState.setText(summerText);
+        summerState.setText(summerText);*/
         if (connectionAdapter == null) {
             connectionAdapter = new ConnectionAdapter(this, allNetConnection);
             channelList.setAdapter(connectionAdapter);

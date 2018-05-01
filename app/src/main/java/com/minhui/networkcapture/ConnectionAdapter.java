@@ -73,11 +73,12 @@ public class ConnectionAdapter extends BaseAdapter {
         holder.netState.setText(connection.ipAndPort);
         holder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.refreshTime));
         int sumByte= (int) ((connection.sendByteNum+connection.receiveByteNum)/1000+0.5);
+
         String showSum;
         if(sumByte>1000){
              showSum=String.valueOf(sumByte/1000)+"mb";
         }else {
-            showSum=String.valueOf(sumByte/1000)+"kb";
+            showSum=String.valueOf(sumByte)+"kb";
         }
 
         holder.size.setText(showSum);

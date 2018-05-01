@@ -54,7 +54,7 @@ class TCPConnection extends BaseNetConnection{
     private final VPNServer.KeyHandler keyHandler;
     private int interestingOps;
     private int remainingWindow;
-
+    private String url;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         this.vpnService = vpnService;
