@@ -46,6 +46,9 @@ public class PackageShowInfo implements Parcelable {
         Collections.sort(showInfos, new Comparator<PackageShowInfo>() {
             @Override
             public int compare(PackageShowInfo o1, PackageShowInfo o2) {
+                if(o1==o2){
+                    return 0;
+                }
                 if (o1.appName == null && o2.appName == null) {
                     return o1.packageName.toUpperCase().compareTo(o2.packageName.toUpperCase());
                 }
@@ -55,10 +58,12 @@ public class PackageShowInfo implements Parcelable {
                 if (o2.appName == null) {
                     return 1;
                 }
-                if (o1.appName.toUpperCase().startsWith(NO_APP_NAME)) {
+                if (o1.appName.toUpperCase().startsWith(NO_APP_NAME)&&
+                        !o2.appName.toUpperCase().startsWith(NO_APP_NAME)) {
                     return 1;
                 }
-                if (o2.appName.toUpperCase().startsWith(NO_APP_NAME)) {
+                if (!o1.appName.toUpperCase().startsWith(NO_APP_NAME)&&
+                        o2.appName.toUpperCase().startsWith(NO_APP_NAME)) {
                     return -1;
                 }
                 return o1.appName.toUpperCase().compareTo(o2.appName.toUpperCase());

@@ -249,11 +249,11 @@ class Packet  implements Serializable {
         if (isUDP) {
             destinationPort = udpHeader.destinationPort;
             sourcePort = udpHeader.sourcePort;
-            ipAndrPort = "udp:ip" + destinationAddress.getHostAddress() + ":" + destinationPort + ",source:" + sourcePort;
+            ipAndrPort = "UDP:" + destinationAddress.getHostAddress() + ":" + destinationPort + " " + sourcePort;
         } else {
             destinationPort = tcpHeader.destinationPort;
             sourcePort = tcpHeader.sourcePort;
-            ipAndrPort = "tcp:ip" + destinationAddress.getHostAddress() + ":" + destinationPort + ",source:" + sourcePort;
+            ipAndrPort = "TCP:" + destinationAddress.getHostAddress() + ":" + destinationPort + " " + sourcePort;
         }
         return ipAndrPort;
     }

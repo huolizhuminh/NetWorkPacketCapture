@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp">
+
+        <ImageView
+            android:id="@+id/select_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+
+            tools:src="@drawable/sym_def_app_icon" />
+
+        <RelativeLayout
+            android:id="@+id/name_container"
+            android:layout_width="140dp"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:layout_alignParentEnd="true"
+            >
+
+            <TextView
+                android:id="@+id/refresh_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:layout_alignParentEnd="true"
+                tools:text="04-30 12:28:21" />
+            <TextView
+                android:id="@+id/net_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:layout_below="@id/refresh_time"
+                android:layout_alignParentEnd="true"
+                tools:text="1 kb" />
+            <TextView
+                android:id="@+id/is_ssl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/net_size"
+                android:text="@string/ssl" />
+        </RelativeLayout>
+        <RelativeLayout
+            android:id="@+id/net_container"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/select_icon">
+
+            <TextView
+                android:id="@+id/app_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:gravity="center"
+                android:textSize="20sp"
+                tools:text="qq" />
+            <TextView
+                android:id="@+id/net_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:layout_below="@id/app_name"
+                tools:text="TCP:12.21.43.12:8080 2323" />
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>

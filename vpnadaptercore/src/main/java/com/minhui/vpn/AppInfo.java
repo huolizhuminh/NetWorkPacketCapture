@@ -44,7 +44,6 @@ public class AppInfo {
     }
 
 
-
     private AppInfo(String leaderAppName, String allAppName, String[] pkgs) {
         this.leaderAppName = leaderAppName;
         this.allAppName = allAppName;
@@ -83,7 +82,9 @@ public class AppInfo {
                 return null;
             }
         }
-        list.add(new Entry("System", "root.uid=0"));
+        if(list.size()==0){
+            list.add(new Entry("System", "root.uid=0"));
+        }
         Collections.sort(list, new Comparator<Entry>() {
             public int compare(Entry lhs, Entry rhs) {
                 int ret = lhs.appName.compareToIgnoreCase(rhs.appName);
@@ -107,7 +108,7 @@ public class AppInfo {
     }
 
     public static synchronized Drawable getIcon(Context ctx, String pkgName, boolean onlyPeek) {
-        Drawable drawable;
+        Drawable drawable=null;
         synchronized (AppInfo.class) {
             IconInfo iconInfo;
             if (defaultIcon == null) {
@@ -119,15 +120,13 @@ public class AppInfo {
                 appPackageInfo = pm.getPackageInfo(pkgName, 0);
                 long lastUpdate = appPackageInfo.lastUpdateTime;
                 iconInfo = (IconInfo) iconCache.get(pkgName);
-                if (!(iconInfo == null || iconInfo.date != lastUpdate || iconInfo.icon == null)) {
+                if (iconInfo != null && iconInfo.date == lastUpdate && iconInfo.icon != null) {
                     drawable = iconInfo.icon;
                 }
             } catch (PackageManager.NameNotFoundException e) {
             }
             if (appPackageInfo != null) {
-                if (onlyPeek) {
-                    drawable = null;
-                } else {
+                if (!onlyPeek) {
                     drawable = appPackageInfo.applicationInfo.loadIcon(pm);
                     iconInfo = new IconInfo();
                     iconInfo.date = appPackageInfo.lastUpdateTime;

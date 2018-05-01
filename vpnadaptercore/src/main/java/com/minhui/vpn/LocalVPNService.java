@@ -74,7 +74,7 @@ public class LocalVPNService extends VpnService {
             e.printStackTrace();
         }
       /*   addAllowedApp(builder, YOUTUBE_APP);*/
-        vpnInterface = builder.setSession(LocalVpnInit.getAppName()).establish();
+        vpnInterface = builder.setSession(VPNConnectManager.getInstance().getAppName()).establish();
     }
 
     private void addAllowedApp(Builder builder, String appName) {

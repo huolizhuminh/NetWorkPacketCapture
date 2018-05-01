@@ -52,5 +52,7 @@ public class SocketUtils {
     }
 
 
-
+    public static int getUid(int port) {
+        return 0;
+    }
 }

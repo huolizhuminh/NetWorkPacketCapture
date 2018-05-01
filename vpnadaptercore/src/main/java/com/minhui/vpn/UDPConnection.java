@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-class UDPConnection {
+class UDPConnection  extends BaseNetConnection {
 
 
     private static final String TAG = UDPConnection.class.getSimpleName();
@@ -32,12 +32,7 @@ class UDPConnection {
     private DatagramChannel channel;
     private final ConcurrentLinkedQueue<Packet> toNetWorkPackets = new ConcurrentLinkedQueue<>();
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
-    String ipAndPort;
-    public long sendNum;
-    public long receiveNum;
-    public long receivePacketNum;
-    public long sendPacketNum;
-    public long refreshTime = System.currentTimeMillis();
+
 
     public UDPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
         this.vpnService = vpnService;
@@ -52,20 +47,13 @@ class UDPConnection {
                 processKey(key);
             }
         };
-
+        port=packet.udpHeader.sourcePort;
     }
 
     private String hostName;
 
     public String getHostName() {
-        if (hostName != null) {
-            return hostName;
-        }
-        try {
-            hostName = VPNConnectManager.getInstance().getHostName(referencePacket.ip4Header.sourceAddress);
-        } catch (Exception e) {
 
-        }
         return hostName;
 
     }
@@ -106,7 +94,7 @@ class UDPConnection {
             VPNLog.d(TAG, "read  data :readBytes:" + readBytes + "ipAndPort:" + ipAndPort);
             VPNConnectManager.getInstance().addReceiveNum(newPacket,readBytes);
             receivePacketNum++;
-            receiveNum = receiveNum + readBytes;
+            receiveByteNum = receiveByteNum + readBytes;
             refreshTime = System.currentTimeMillis();
         }
     }
@@ -123,7 +111,7 @@ class UDPConnection {
 
             VPNConnectManager.getInstance().addSendNum(toNetWorkPacket,payloadBuffer.limit() - payloadBuffer.position());
             sendPacketNum++;
-            sendNum = sendNum + payloadBuffer.limit() - payloadBuffer.position();
+            sendByteNum = sendByteNum + payloadBuffer.limit() - payloadBuffer.position();
             refreshTime = System.currentTimeMillis();
             while (payloadBuffer.hasRemaining())
                 channel.write(payloadBuffer);

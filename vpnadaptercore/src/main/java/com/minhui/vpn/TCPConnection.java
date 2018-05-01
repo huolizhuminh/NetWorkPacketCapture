@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Transmission Control Block
  */
-class TCPConnection {
+class TCPConnection extends BaseNetConnection{
     private static final String TAG = TCPConnection.class.getSimpleName();
     private final VpnService vpnService;
     private final Selector selector;
@@ -54,12 +54,6 @@ class TCPConnection {
     private final VPNServer.KeyHandler keyHandler;
     private int interestingOps;
     private int remainingWindow;
-    public String ipAndPort;
-    public long sendNum;
-    public long sendPacketNum;
-    public long receiveNum;
-    public long receivePacketNum;
-    public long refreshTime = System.currentTimeMillis();
 
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
@@ -74,26 +68,21 @@ class TCPConnection {
         theirAcknowledgementNum = mySequenceNum;
         myAcknowledgementNum = theirSequenceNum + 1;
         clientWindow = packet.tcpHeader.getWindow();
+
         keyHandler = new VPNServer.KeyHandler() {
             @Override
             public void onKeyReady(SelectionKey key) {
                 processKey(key);
             }
         };
+        port=packet.tcpHeader.sourcePort;
 
     }
 
     private String hostName;
 
     public String getHostName() {
-        if (hostName != null) {
-            return hostName;
-        }
-        try {
-            hostName = VPNConnectManager.getInstance().getHostName(referencePacket.ip4Header.sourceAddress);
-        } catch (Exception e) {
 
-        }
         return hostName;
 
     }
@@ -129,7 +118,7 @@ class TCPConnection {
                 }
                 VPNConnectManager.getInstance().addSendNum(toNetPacket, playLoadSize);
 
-                sendNum = sendNum + playLoadSize;
+                sendByteNum = sendByteNum + playLoadSize;
                 sendPacketNum++;
                 refreshTime = System.currentTimeMillis();
                 //after write to the channel we should notify local socket
@@ -213,7 +202,7 @@ class TCPConnection {
             mySequenceNum += readBytes; // Next sequence number
             receiveBuffer.position(HEADER_SIZE + readBytes);
             VPNConnectManager.getInstance().addReceiveNum(packet, readBytes);
-            receiveNum = receiveNum + readBytes;
+            receiveByteNum = receiveByteNum + readBytes;
             receivePacketNum++;
             refreshTime = System.currentTimeMillis();
         }
@@ -611,9 +600,7 @@ class TCPConnection {
         return waitingForNetworkData && getRemainingClientWindow() > 0;
     }
 
-    private boolean isConnectToDashCam() {
-        return VPNConnectManager.getInstance().isDeviceAddress(referencePacket.ip4Header.sourceAddress.getHostAddress());
-    }
+
 
     private boolean mayConnect() {
         return TCPStatus.SYN_SENT == getStatus();

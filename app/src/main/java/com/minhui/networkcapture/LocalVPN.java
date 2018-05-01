@@ -19,25 +19,20 @@ package com.minhui.networkcapture;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.minhui.vpn.BaseNetConnection;
 import com.minhui.vpn.LocalVPNService;
-import com.minhui.vpn.LocalVpnInit;
-import com.minhui.vpn.NetConnection;
 import com.minhui.vpn.VPNConnectManager;
 
 import java.util.List;
@@ -75,7 +70,7 @@ public class LocalVPN extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_local_vpn);
-        LocalVpnInit.init(getString(R.string.app_name), getApplicationContext());
+
         vpnButton = (Button) findViewById(R.id.vpn);
         vpnButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -156,7 +151,7 @@ public class LocalVPN extends Activity {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                final List<NetConnection> allNetConnection = VPNConnectManager.getInstance().getAllNetConnection();
+                final List<BaseNetConnection> allNetConnection = VPNConnectManager.getInstance().getAllNetConnection();
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -167,7 +162,7 @@ public class LocalVPN extends Activity {
         }, 1000, 1000);
     }
 
-    private void refreshView(List<NetConnection> allNetConnection) {
+    private void refreshView(List<BaseNetConnection> allNetConnection) {
         VPNConnectManager vpnConnectManager = VPNConnectManager.getInstance();
 
         if (allNetConnection == null || allNetConnection.isEmpty()) {
@@ -195,6 +190,7 @@ public class LocalVPN extends Activity {
         }
         timer.purge();
         timer.cancel();
+
         timer = null;
     }
 

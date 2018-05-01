@@ -1,7 +1,6 @@
 package com.minhui.vpn;
 
 import android.net.VpnService;
-import android.os.SystemClock;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -12,8 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -22,7 +19,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 
 class VPNServer implements CloseableRun {
-    private final Timer timer;
     private String TAG = VPNServer.class.getSimpleName();
     private static final int MAX_CACHE_TCP_SIZE = 20; // XXX: Is this ideal?
     VpnService vpnService;
@@ -35,15 +31,9 @@ class VPNServer implements CloseableRun {
                 public void cleanup(Map.Entry<String, TCPConnection> eldest) {
                     VPNLog.d(TAG, "clean up tcpConn " + eldest.getValue().getIpAndPort());
                     eldest.getValue().closeChannelAndClearCache();
-                    synchronized (tcpLock) {
-                        if (tcpConnectionArrayList.contains(eldest.getValue())) {
-                            tcpConnectionArrayList.remove(eldest.getValue());
-                        }
-                    }
                 }
             });
 
-    private final ArrayList<TCPConnection> tcpConnectionArrayList = new ArrayList<>();
     private boolean isClose = false;
 
     private static final int MAX_UDP_CACHE_SIZE = 50;
@@ -61,8 +51,7 @@ class VPNServer implements CloseableRun {
         this.vpnService = vpnService;
         this.outputQueue = outputQueue;
         this.selector = selector;
-        timer = new Timer();
-        timer.schedule(new ChannelTimerTask(), 1000, 1000);
+
     }
 
     void processPacket(Packet packet) {
@@ -156,10 +145,7 @@ class VPNServer implements CloseableRun {
         closeAllTCPConn();
         closeAllUDPConn();
         SocketUtils.closeResources(selector);
-        if (timer != null) {
-            timer.purge();
-            timer.cancel();
-        }
+
     }
 
     TCPConnection getTCPConn(String ipAndPort) {
@@ -172,7 +158,6 @@ class VPNServer implements CloseableRun {
     void putTCPConn(String ipAndPort, TCPConnection tcpConnection) {
         synchronized (tcpLock) {
             tcpCache.put(ipAndPort, tcpConnection);
-            tcpConnectionArrayList.add(tcpConnection);
         }
     }
 
@@ -181,18 +166,19 @@ class VPNServer implements CloseableRun {
             VPNLog.d(TAG, "closeTCPConnection ipAndPort " + tcpConnection.getIpAndPort());
             tcpConnection.closeChannelAndClearCache();
             tcpCache.remove(tcpConnection.getIpAndPort());
-            tcpConnectionArrayList.remove(tcpConnection);
         }
     }
 
     private void closeAllTCPConn() {
         synchronized (tcpLock) {
-            Iterator<TCPConnection> iterator = tcpConnectionArrayList.iterator();
-            while (iterator.hasNext()) {
-                TCPConnection tcpConnection = iterator.next();
-                tcpConnection.closeChannelAndClearCache();
-                tcpCache.remove(tcpConnection.getIpAndPort());
-                iterator.remove();
+            synchronized (tcpLock) {
+                Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
+                while (it.hasNext()) {
+                    TCPConnection tcpConnection = it.next().getValue();
+                    tcpConnection.closeChannelAndClearCache();
+                    tcpCache.remove(tcpConnection.getIpAndPort());
+                    it.remove();
+                }
             }
         }
 
@@ -242,69 +228,40 @@ class VPNServer implements CloseableRun {
     }
 
 
-    class ChannelTimerTask extends TimerTask {
-
-        @Override
-        public void run() {
-            clearTimeOutChannel();
-        }
-
-        private void clearTimeOutChannel() {
-
-            long currentTime = SystemClock.currentThreadTimeMillis();
-            synchronized (tcpLock) {
-                Iterator<TCPConnection> iterator = tcpConnectionArrayList.iterator();
-                while (iterator.hasNext()) {
-                    TCPConnection tcpConnection = iterator.next();
-                    if (tcpConnection.needClear(currentTime)) {
-                        tcpConnection.closeChannelAndClearCache();
-                        tcpCache.remove(tcpConnection.getIpAndPort());
-                        iterator.remove();
-                    }
-                }
-            }
-        }
-    }
-
     interface KeyHandler {
         void onKeyReady(SelectionKey key);
     }
 
-    public List<NetConnection> getNetConnections() {
-        List<NetConnection> netConnections = new ArrayList<>();
+    public List<BaseNetConnection> getNetConnections() {
+        List<BaseNetConnection> netConnections = new ArrayList<>();
         synchronized (tcpLock) {
-            Iterator<TCPConnection> iterator = tcpConnectionArrayList.iterator();
-            while (iterator.hasNext()) {
-                TCPConnection tcpConnection = iterator.next();
-                NetConnection connection = new NetConnection();
-                connection.type = "TCP";
-                connection.ipAndPort = tcpConnection.ipAndPort;
-                connection.receiveNum = tcpConnection.receiveNum;
-                connection.receivePacketNum = tcpConnection.receivePacketNum;
-                connection.sendNum = tcpConnection.sendNum;
-                connection.sendPacketNum = tcpConnection.sendPacketNum;
-                connection.refreshTime = tcpConnection.refreshTime;
-                  connection.hostName=tcpConnection.getHostName();
-                netConnections.add(connection);
+            Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
+            while (it.hasNext()) {
+                TCPConnection tcpConnection = it.next().getValue();
+                netConnections.add(tcpConnection);
             }
         }
         synchronized (udpConnections) {
             Iterator<Map.Entry<String, UDPConnection>> it = udpConnections.entrySet().iterator();
             while (it.hasNext()) {
                 UDPConnection udpConnection = it.next().getValue();
-                NetConnection connection = new NetConnection();
-                connection.type = "UPD";
-                connection.ipAndPort = udpConnection.ipAndPort;
-                connection.receiveNum = udpConnection.receiveNum;
-                connection.receivePacketNum = udpConnection.receivePacketNum;
-                connection.sendNum = udpConnection.sendNum;
-                connection.sendPacketNum = udpConnection.sendPacketNum;
-                connection.refreshTime = udpConnection.refreshTime;
-                connection.hostName = udpConnection.getHostName();
-                netConnections.add(connection);
+                netConnections.add(udpConnection);
             }
         }
-        Collections.sort(netConnections);
+        Collections.sort(netConnections, new BaseNetConnection.NetConnectionComparator());
+        NetFileManager.getInstance().refresh();
+        for(BaseNetConnection connection:netConnections){
+            if(connection.appInfo==null){
+                Integer uid=NetFileManager.getInstance().getUid(connection.port);
+
+                if(uid==null){
+                    VPNLog.d(TAG,"can not find uid");
+                    continue;
+                }
+                connection.appInfo=AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(),uid);
+
+            }
+        }
         return netConnections;
     }
 }
