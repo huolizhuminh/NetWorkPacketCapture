@@ -235,6 +235,8 @@ class VPNServer implements CloseableRun {
     public List<BaseNetConnection> getNetConnections() {
         List<BaseNetConnection> netConnections = new ArrayList<>();
         String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
+        String selectPackage = ((LocalVPNService) LocalVPNService.getInstance()).getSelectPackage();
+
         synchronized (tcpLock) {
             Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
             while (it.hasNext()) {
@@ -247,7 +249,11 @@ class VPNServer implements CloseableRun {
                         connection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
                     }
                 }
-                if (connection.appInfo != null && packageName.equals(connection.appInfo.pkgs.getAt(0))) {
+                String capturePkg = connection.appInfo == null ? null : connection.appInfo.pkgs.getAt(0);
+                if (connection.appInfo != null && packageName.equals(capturePkg)) {
+                    continue;
+                }
+                if (selectPackage != null && !selectPackage.equals(capturePkg)) {
                     continue;
                 }
                 netConnections.add(connection);
@@ -265,7 +271,11 @@ class VPNServer implements CloseableRun {
                         udpConnection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
                     }
                 }
-                if (udpConnection.appInfo != null && packageName.equals(udpConnection.appInfo.pkgs.getAt(0))) {
+                String capturePkg = udpConnection.appInfo == null ? null : udpConnection.appInfo.pkgs.getAt(0);
+                if (udpConnection.appInfo != null && packageName.equals(capturePkg)) {
+                    continue;
+                }
+                if (selectPackage != null && !selectPackage.equals(capturePkg)) {
                     continue;
                 }
                 netConnections.add(udpConnection);

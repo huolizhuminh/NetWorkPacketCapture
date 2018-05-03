@@ -87,6 +87,10 @@ public class LocalVPNService extends VpnService {
         }
     }
 
+    public String getSelectPackage() {
+        return selectPackage;
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) {
