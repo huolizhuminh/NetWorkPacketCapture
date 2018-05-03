@@ -4,19 +4,25 @@ package com.minhui.vpn;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
+import android.text.TextUtils;
+import android.util.Log;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Locale;
 
 /**
  * Representation of an IP Packet
  */
 
-class Packet  implements Serializable {
+class Packet implements Serializable {
     static final int IP4_HEADER_SIZE = 20;
     static final int TCP_HEADER_SIZE = 20;
     static final int UDP_HEADER_SIZE = 8;
+    private static final int FIRST_TCP_DATA = 40;
+    private static final String TAG = "Packet";
 
 
     IP4Header ip4Header;
@@ -29,6 +35,24 @@ class Packet  implements Serializable {
     boolean releaseAfterWritingToDevice = true;
     boolean cancelSending = false;
     int playLoadSize = 0;
+    private boolean isSSL;
+    private String hostName;
+    private String method;
+    private String requestUrl;
+    private boolean cannotParse;
+
+
+    public boolean isSSL() {
+        return isSSL;
+    }
+
+    public String getHostName() {
+        return hostName;
+    }
+
+    public String getRequestUrl() {
+        return requestUrl;
+    }
 
     public IP4Header getIp4Header() {
         return ip4Header;
@@ -93,8 +117,11 @@ class Packet  implements Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder("Packet{");
         sb.append("ip4Header=").append(ip4Header);
-        if (isTCP) sb.append(", tcpHeader=").append(tcpHeader);
-        else if (isUDP) sb.append(", udpHeader=").append(udpHeader);
+        if (isTCP) {
+            sb.append(", tcpHeader=").append(tcpHeader);
+        } else if (isUDP) {
+            sb.append(", udpHeader=").append(udpHeader);
+        }
         sb.append(", payloadSize=").append(backingBuffer.limit() - backingBuffer.position());
         sb.append('}');
         return sb.toString();
@@ -186,9 +213,9 @@ class Packet  implements Serializable {
             sum += BitUtils.getUnsignedShort(buffer.getShort());
             ipLength -= 2;
         }
-        while (sum >> 16 > 0)
+        while (sum >> 16 > 0) {
             sum = (sum & 0xFFFF) + (sum >> 16);
-
+        }
         sum = ~sum;
         ip4Header.headerChecksum = sum;
         backingBuffer.putShort(10, (short) sum);
@@ -218,12 +245,12 @@ class Packet  implements Serializable {
             sum += BitUtils.getUnsignedShort(buffer.getShort());
             tcpLength -= 2;
         }
-        if (tcpLength > 0)
+        if (tcpLength > 0) {
             sum += BitUtils.getUnsignedByte(buffer.get()) << 8;
-
-        while (sum >> 16 > 0)
+        }
+        while (sum >> 16 > 0) {
             sum = (sum & 0xFFFF) + (sum >> 16);
-
+        }
         sum = ~sum;
         tcpHeader.checksum = sum;
         backingBuffer.putShort(IP4_HEADER_SIZE + 16, (short) sum);
@@ -232,10 +259,12 @@ class Packet  implements Serializable {
 
     private void fillHeader(ByteBuffer buffer) {
         ip4Header.fillHeader(buffer);
-        if (isUDP)
+        if (isUDP) {
             udpHeader.fillHeader(buffer);
-        else if (isTCP)
+        } else if (isTCP) {
             tcpHeader.fillHeader(buffer);
+        }
+
     }
 
     public String getIpAndPort() {
@@ -258,8 +287,190 @@ class Packet  implements Serializable {
         return ipAndrPort;
     }
 
+    /**
+     * 通过packet包发送的第一个数据判断类型
+     * 如果是http协议 则首先发送的是http的请求头，请求头首先声明请求的类型 包括GET Head POST PUT OPTION TRACE CONNECT
+     * 如果是https协议，则完成socket连接之后开始ssl握手，ssl握手时客户端发给服务器的的第一个包的包内容中包括了访问的域名
+     */
+    public void parseHttpRequestHeader() {
+        if (!isTCP) {
+            return;
+        }
+        int lastPosition = backingBuffer.position();
+        byte[] array = backingBuffer.array();
+        byte firsByte = array[FIRST_TCP_DATA];
+        try {
+            switch (firsByte) {
+                //GET
+                case 'G':
+                    //HEAD
+                case 'H':
+                    //POST, PUT
+                case 'P':
+                    //DELETE
+                case 'D':
+                    //OPTIONS
+                case 'O':
+                    //TRACE
+                case 'T':
+                    //CONNECT
+                case 'C':
+                    getHttpHostAndRequestUrl(array);
+                    break;
+                //SSL
+                case 0x16:
+                    getSNI(array);
+                    break;
+                default:
+                    cannotParse = true;
+                    isSSL = false;
+                    Log.d(TAG, "can not parse " + (firsByte & 0xFF) + "   " + ((char) firsByte));
+                    break;
 
-    static class IP4Header implements  Serializable {
+
+            }
+
+
+        } catch (Exception e) {
+
+        } finally {
+            backingBuffer.position(lastPosition);
+        }
+
+    }
+
+    private void getSNI(byte[] buffer) {
+        isSSL = true;
+        int offset = FIRST_TCP_DATA;
+        int count = playLoadSize;
+        int limit = offset + count;
+        if (count > 43 && buffer[offset] == 0x16) { //TLS Client Hello
+            offset += 43; //Skip 43 byte header
+
+            //read sessionID
+            if (offset + 1 > limit) {
+                return;
+            }
+            int sessionIDLength = buffer[offset++] & 0xFF;
+            offset += sessionIDLength;
+
+            //read cipher suites
+            if (offset + 2 > limit) {
+                return;
+            }
+
+            int cipherSuitesLength = CommonMethods.readShort(buffer, offset) & 0xFFFF;
+            offset += 2;
+            offset += cipherSuitesLength;
+
+            //read Compression method.
+            if (offset + 1 > limit) {
+                return;
+            }
+            int compressionMethodLength = buffer[offset++] & 0xFF;
+            offset += compressionMethodLength;
+            if (offset == limit) {
+                VPNLog.w(TAG, "TLS Client Hello packet doesn't contains SNI info.(offset == limit)");
+                return;
+            }
+
+            //read Extensions
+            if (offset + 2 > limit) {
+                return;
+            }
+            int extensionsLength = CommonMethods.readShort(buffer, offset) & 0xFFFF;
+            offset += 2;
+
+            if (offset + extensionsLength > limit) {
+                VPNLog.w(TAG, "TLS Client Hello packet is incomplete.");
+                return;
+            }
+
+            while (offset + 4 <= limit) {
+                int type0 = buffer[offset++] & 0xFF;
+                int type1 = buffer[offset++] & 0xFF;
+                int length = CommonMethods.readShort(buffer, offset) & 0xFFFF;
+                offset += 2;
+
+                if (type0 == 0x00 && type1 == 0x00 && length > 5) {
+                    offset += 5;
+                    length -= 5;
+                    if (offset + length > limit) {
+                        return;
+                    }
+                    String serverName = new String(buffer, offset, length);
+                    VPNLog.i("SNI: %s\n", serverName);
+                    isSSL = true;
+                    hostName = serverName;
+                    return;
+                } else {
+                    offset += length;
+                }
+
+            }
+            VPNLog.e(TAG, "TLS Client Hello packet doesn't contains Host field info.");
+            return;
+        } else {
+            VPNLog.e(TAG, "Bad TLS Client Hello packet.");
+            return;
+        }
+    }
+
+    private void getHttpHostAndRequestUrl(byte[] array) {
+        isSSL = false;
+        String headerString = new String(array, FIRST_TCP_DATA, playLoadSize);
+        String[] headerLines = headerString.split("\\r\\n");
+        String host = getHttpHost(headerLines);
+        if (!TextUtils.isEmpty(host)) {
+            this.hostName = host;
+        }
+        String[] parts = headerLines[0].trim().split(" ");
+        if (parts.length == 3) {
+            method = parts[0];
+            String url = parts[1];
+            VPNLog.d(TAG, "url is " + url);
+            if (url.startsWith("/")) {
+                requestUrl = "http://" + hostName + url;
+            } else {
+                requestUrl = "http://" + url;
+            }
+        }
+    }
+
+    public static String getHttpHost(String[] headerLines) {
+
+        String requestLine = headerLines[0];
+        if (requestLine.startsWith("GET") || requestLine.startsWith("POST") || requestLine.startsWith("HEAD")
+                || requestLine.startsWith("OPTIONS")) {
+            for (int i = 1; i < headerLines.length; i++) {
+                String[] nameValueStrings = headerLines[i].split(":");
+                if (nameValueStrings.length == 2) {
+                    String name = nameValueStrings[0].toLowerCase(Locale.ENGLISH).trim();
+                    String value = nameValueStrings[1].trim();
+                    if ("host".equals(name)) {
+                        return value;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * IP头部总共20个字节
+     * char m_cVersionAndHeaderLen;     　　//版本信息(前4位)，头长度(后4位)  1个
+     * char m_cTypeOfService;      　　　　　 // 服务类型8位    1个
+     * short m_sTotalLenOfPacket;    　　　　//数据包长度      2个
+     * short m_sPacketID;      　　　　　　　 //数据包标识      2个
+     * short m_sSliceinfo;      　　　　　　　  //分片使用     2个
+     * char m_cTTL;        　　　　　　　　　　//存活时间       1个
+     * char m_cTypeOfProtocol;    　　　　　 //协议类型       1个
+     * short m_sCheckSum;      　　　　　　 //校验和          2个
+     * unsigned int m_uiSourIp;     　　　　　//源ip         4个
+     * unsigned int m_uiDestIp;     　　　　　//目的ip        4个
+     */
+    static class IP4Header implements Serializable {
+
         public byte version;
         byte IHL;
         int headerLength;
@@ -316,12 +527,14 @@ class Packet  implements Serializable {
             }
 
             private static TransportProtocol numberToEnum(int protocolNumber) {
-                if (protocolNumber == 6)
+                if (protocolNumber == 6) {
                     return TCP;
-                else if (protocolNumber == 17)
+                } else if (protocolNumber == 17) {
                     return UDP;
-                else
+                } else {
                     return Other;
+                }
+
             }
 
             public int getNumber() {
@@ -388,13 +601,44 @@ class Packet  implements Serializable {
         }
     }
 
-    static class TCPHeader implements Serializable{
-        static final int FIN = 0x01; //会话结束
-        static final int SYN = 0x02; //开始会话请求
-        static final int RST = 0x04;  //复位 中断一个链接
-        static final int PSH = 0x08;  //数据包立即推送
-        static final int ACK = 0x10;  //应答
-        static final int URG = 0x20;  //紧急
+    /**
+     * short m_sSourPort;        　　　　　　// 源端口号16bit
+     * short m_sDestPort;       　　　　　　 // 目的端口号16bit
+     * unsigned int m_uiSequNum;       　　// 序列号32bit
+     * unsigned int m_uiAcknowledgeNum;  // 确认号32bit
+     * short m_sHeaderLenAndFlag;      　　// 前4位：TCP头长度；中6位：保留；后6位：标志位
+     * short m_sWindowSize;       　　　　　// 窗口大小16bit
+     * short m_sCheckSum;        　　　　　 // 检验和16bit
+     * short m_surgentPointer;      　　　　 // 紧急数据偏移量16bit
+     */
+    static class TCPHeader implements Serializable {
+        /**
+         * 会话结束
+         */
+
+        static final int FIN = 0x01;
+        /**
+         * 开始会话请求
+         */
+
+        static final int SYN = 0x02;
+        /**
+         * 复位 中断一个链接
+         */
+
+        static final int RST = 0x04;
+        /**
+         * 数据包立即推送
+         */
+        static final int PSH = 0x08;
+        /**
+         * 应答
+         */
+        static final int ACK = 0x10;
+        /**
+         * 紧急
+         */
+        static final int URG = 0x20;
 
         int sourcePort;
         int destinationPort;
@@ -492,12 +736,25 @@ class Packet  implements Serializable {
             sb.append(", clientWindow=").append(window);
             sb.append(", checksum=").append(checksum);
             sb.append(", flags=");
-            if (isFIN()) sb.append(" FIN");
-            if (isSYN()) sb.append(" SYN");
-            if (isRST()) sb.append(" RST");
-            if (isPSH()) sb.append(" PSH");
-            if (isACK()) sb.append(" ACK");
-            if (isURG()) sb.append(" URG");
+            if (isFIN()) {
+                sb.append(" FIN");
+            }
+            if (isSYN()) {
+                sb.append(" SYN");
+            }
+            if (isRST()) {
+                sb.append(" RST");
+            }
+
+            if (isPSH()) {
+                sb.append(" PSH");
+            }
+            if (isACK()) {
+                sb.append(" ACK");
+            }
+            if (isURG()) {
+                sb.append(" URG");
+            }
             sb.append('}');
             return sb.toString();
         }
@@ -519,7 +776,7 @@ class Packet  implements Serializable {
         }
     }
 
-    static class UDPHeader implements  Serializable {
+    static class UDPHeader implements Serializable {
         int sourcePort;
         int destinationPort;
 

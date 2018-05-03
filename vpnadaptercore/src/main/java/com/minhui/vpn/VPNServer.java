@@ -234,34 +234,47 @@ class VPNServer implements CloseableRun {
 
     public List<BaseNetConnection> getNetConnections() {
         List<BaseNetConnection> netConnections = new ArrayList<>();
+        String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
         synchronized (tcpLock) {
             Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
             while (it.hasNext()) {
-                TCPConnection tcpConnection = it.next().getValue();
-                netConnections.add(tcpConnection);
+                TCPConnection connection = it.next().getValue();
+                if (connection.appInfo == null) {
+                    Integer uid = NetFileManager.getInstance().getUid(connection.port);
+
+                    if (uid != null) {
+                        VPNLog.d(TAG, "can not find uid");
+                        connection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
+                    }
+                }
+                if (connection.appInfo != null && packageName.equals(connection.appInfo.pkgs.getAt(0))) {
+                    continue;
+                }
+                netConnections.add(connection);
             }
         }
         synchronized (udpConnections) {
             Iterator<Map.Entry<String, UDPConnection>> it = udpConnections.entrySet().iterator();
             while (it.hasNext()) {
                 UDPConnection udpConnection = it.next().getValue();
+                if (udpConnection.appInfo == null) {
+                    Integer uid = NetFileManager.getInstance().getUid(udpConnection.port);
+
+                    if (uid != null) {
+                        VPNLog.d(TAG, "can not find uid");
+                        udpConnection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
+                    }
+                }
+                if (udpConnection.appInfo != null && packageName.equals(udpConnection.appInfo.pkgs.getAt(0))) {
+                    continue;
+                }
                 netConnections.add(udpConnection);
+
             }
         }
         Collections.sort(netConnections, new BaseNetConnection.NetConnectionComparator());
         NetFileManager.getInstance().refresh();
-        for(BaseNetConnection connection:netConnections){
-            if(connection.appInfo==null){
-                Integer uid=NetFileManager.getInstance().getUid(connection.port);
 
-                if(uid==null){
-                    VPNLog.d(TAG,"can not find uid");
-                    continue;
-                }
-                connection.appInfo=AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(),uid);
-
-            }
-        }
         return netConnections;
     }
 }

@@ -57,28 +57,46 @@ public class ConnectionAdapter extends BaseAdapter {
             convertView = View.inflate(context, R.layout.item_packet, null);
             holder = new Holder(convertView);
             convertView.setTag(holder);
-        }else {
-            holder= (Holder) convertView.getTag();
+        } else {
+            holder = (Holder) convertView.getTag();
         }
         BaseNetConnection connection = netConnections.get(position);
-        if(connection.appInfo!=null){
+        if (connection.appInfo != null) {
 
             holder.processName.setText(connection.appInfo.leaderAppName);
-            if(connection.appInfo.pkgs!=null){
-                holder.icon.setImageDrawable(AppInfo.getIcon(context,connection.appInfo.pkgs.getAt(0)));
+            if (connection.appInfo.pkgs != null) {
+                holder.icon.setImageDrawable(AppInfo.getIcon(context, connection.appInfo.pkgs.getAt(0)));
+            }
+        }
+        holder.isSSL.setVisibility(View.GONE);
+        holder.hostName.setText(null);
+        holder.hostName.setVisibility(View.GONE);
+        if (BaseNetConnection.TCP.equals(connection.type)) {
+            if (connection.isSSL) {
+                holder.isSSL.setVisibility(View.VISIBLE);
+            }
+
+            if (connection.url != null) {
+                holder.hostName.setText(connection.url);
+            } else {
+                holder.hostName.setText(connection.hostName);
+            }
+            if(connection.url!=null||connection.hostName!=null){
+                holder.hostName.setVisibility(View.VISIBLE);
             }
         }
 
-
         holder.netState.setText(connection.ipAndPort);
         holder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.refreshTime));
-        int sumByte= (int) ((connection.sendByteNum+connection.receiveByteNum)/1000+0.5);
+        int sumByte = (int) (connection.sendByteNum + connection.receiveByteNum);
 
         String showSum;
-        if(sumByte>1000){
-             showSum=String.valueOf(sumByte/1000)+"mb";
-        }else {
-            showSum=String.valueOf(sumByte)+"kb";
+        if (sumByte > 1000000) {
+            showSum = String.valueOf((int) (sumByte / 1000000.0 + 0.5)) + "mb";
+        } else if (sumByte > 1000) {
+            showSum = String.valueOf((int) (sumByte / 1000.0 + 0.5)) + "kb";
+        } else {
+            showSum = String.valueOf(sumByte) + "b";
         }
 
         holder.size.setText(showSum);
@@ -93,6 +111,7 @@ public class ConnectionAdapter extends BaseAdapter {
         TextView refreshTime;
         TextView size;
         TextView isSSL;
+        TextView hostName;
         View baseView;
 
         Holder(View view) {
@@ -103,6 +122,7 @@ public class ConnectionAdapter extends BaseAdapter {
             isSSL = view.findViewById(R.id.is_ssl);
             processName = view.findViewById(R.id.app_name);
             netState = view.findViewById(R.id.net_state);
+            hostName = view.findViewById(R.id.url);
         }
 
     }

@@ -7,8 +7,10 @@ package com.minhui.vpn;
 import android.net.VpnService;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -16,16 +18,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Transmission Control Block
  */
-class TCPConnection extends BaseNetConnection{
+class TCPConnection extends BaseNetConnection {
     private static final String TAG = TCPConnection.class.getSimpleName();
+    private static final int VALID_TCP_DATA_SIZE = 10;
     private final VpnService vpnService;
     private final Selector selector;
     private final VPNServer vpnServer;
@@ -54,7 +59,7 @@ class TCPConnection extends BaseNetConnection{
     private final VPNServer.KeyHandler keyHandler;
     private int interestingOps;
     private int remainingWindow;
-    private String url;
+    private String requestData;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         this.vpnService = vpnService;
@@ -75,17 +80,12 @@ class TCPConnection extends BaseNetConnection{
                 processKey(key);
             }
         };
-        port=packet.tcpHeader.sourcePort;
+        port = packet.tcpHeader.sourcePort;
+        type = TCP;
 
     }
 
-    private String hostName;
 
-    public String getHostName() {
-
-        return hostName;
-
-    }
 
     private void processKey(SelectionKey key) {
         if (key.isValid()) {
@@ -113,6 +113,19 @@ class TCPConnection extends BaseNetConnection{
             if (toNetPacket != null) {
                 ByteBuffer payloadBuffer = toNetPacket.backingBuffer;
                 int playLoadSize = payloadBuffer.limit() - payloadBuffer.position();
+                if (!isSSL && hostName != null) {
+                    byte[] array = payloadBuffer.array();
+                    String requestData=null;
+                    try {
+                        requestData = new String(array, payloadBuffer.position(), playLoadSize,"utf-8");
+                    }catch (Exception e){
+
+                    }
+                    if(requestData!=null){
+                        conversation.add(new ConversationData(true, requestData));
+                    }
+
+                }
                 while (payloadBuffer.hasRemaining()) {
                     channel.write(payloadBuffer);
                 }
@@ -192,7 +205,7 @@ class TCPConnection extends BaseNetConnection{
             Log.d(TAG, "processReadFromNet  no data   " + ipAndPort);
             return;
         } else {
-            // XXX: We should ideally be splitting segments by MTU/MSS, but this seems to work without
+
             packet.updateTCPBuffer(receiveBuffer, (byte) (Packet.TCPHeader.PSH | Packet.TCPHeader.ACK),
                     mySequenceNum, myAcknowledgementNum, readBytes);
             Log.d(TAG, "FromNet  mySeq:" + mySequenceNum +
@@ -205,6 +218,21 @@ class TCPConnection extends BaseNetConnection{
             receiveByteNum = receiveByteNum + readBytes;
             receivePacketNum++;
             refreshTime = System.currentTimeMillis();
+
+            if (!isSSL && hostName != null) {
+                byte[] array = packet.backingBuffer.array();
+                String requestData = null;
+                try {
+                    requestData = new String(array, HEADER_SIZE, readBytes,"utf-8");
+                } catch (UnsupportedEncodingException e) {
+                    Log.d(TAG,"failed to getrequestData error is "+e.getMessage());
+                    e.printStackTrace();
+                }
+                if(requestData!=null){
+                    conversation.add(new ConversationData(false, requestData));
+                }
+
+            }
         }
 
         outputQueue.offer(packet);
@@ -248,6 +276,14 @@ class TCPConnection extends BaseNetConnection{
 
     private void processSendACK(Packet currentPacket) {
         Packet.TCPHeader tcpHeader = currentPacket.tcpHeader;
+        if (sendByteNum == 0 && currentPacket.playLoadSize > VALID_TCP_DATA_SIZE) {
+            currentPacket.parseHttpRequestHeader();
+            hostName = currentPacket.getHostName();
+            isSSL = currentPacket.isSSL();
+            url = currentPacket.getRequestUrl();
+        }
+
+
         if (theirAcknowledgementNum < tcpHeader.acknowledgementNumber) {
             theirAcknowledgementNum = tcpHeader.acknowledgementNumber;
             clientWindow = tcpHeader.window;
@@ -599,7 +635,6 @@ class TCPConnection extends BaseNetConnection{
     private boolean mayRead() {
         return waitingForNetworkData && getRemainingClientWindow() > 0;
     }
-
 
 
     private boolean mayConnect() {

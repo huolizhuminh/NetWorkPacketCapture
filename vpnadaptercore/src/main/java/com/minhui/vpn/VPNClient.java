@@ -45,10 +45,11 @@ public class VPNClient implements CloseableRun {
                 if (isRunClose()) {
                     break;
                 }
-                if (dataSent)
+                if (dataSent) {
                     bufferToNetwork = ByteBuffer.allocate(VPNConstants.BUFFER_SIZE);
-                else
+                } else {
                     bufferToNetwork.clear();
+                }
 
 
                 int readBytes = vpnInput.read(bufferToNetwork);
@@ -91,8 +92,9 @@ public class VPNClient implements CloseableRun {
                                 + "ip:" + packet.ip4Header.sourceAddress.getHostAddress() +
                                 ":" + packet.udpHeader.sourcePort + ";" + packet.udpHeader.destinationPort);
                     }
-                    while (bufferFromNetwork.hasRemaining())
+                    while (bufferFromNetwork.hasRemaining()){
                         vpnOutput.write(bufferFromNetwork);
+                    }
                     if (packet.releaseAfterWritingToDevice) {
                         packet.backingBuffer = null;
                     }

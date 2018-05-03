@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-class UDPConnection  extends BaseNetConnection {
+class UDPConnection extends BaseNetConnection {
 
 
     private static final String TAG = UDPConnection.class.getSimpleName();
@@ -47,7 +47,8 @@ class UDPConnection  extends BaseNetConnection {
                 processKey(key);
             }
         };
-        port=packet.udpHeader.sourcePort;
+        port = packet.udpHeader.sourcePort;
+        type = UDP;
     }
 
     private String hostName;
@@ -92,7 +93,7 @@ class UDPConnection  extends BaseNetConnection {
             receiveBuffer.position(HEADER_SIZE + readBytes);
             outputQueue.offer(newPacket);
             VPNLog.d(TAG, "read  data :readBytes:" + readBytes + "ipAndPort:" + ipAndPort);
-            VPNConnectManager.getInstance().addReceiveNum(newPacket,readBytes);
+            VPNConnectManager.getInstance().addReceiveNum(newPacket, readBytes);
             receivePacketNum++;
             receiveByteNum = receiveByteNum + readBytes;
             refreshTime = System.currentTimeMillis();
@@ -109,7 +110,7 @@ class UDPConnection  extends BaseNetConnection {
         try {
             ByteBuffer payloadBuffer = toNetWorkPacket.backingBuffer;
 
-            VPNConnectManager.getInstance().addSendNum(toNetWorkPacket,payloadBuffer.limit() - payloadBuffer.position());
+            VPNConnectManager.getInstance().addSendNum(toNetWorkPacket, payloadBuffer.limit() - payloadBuffer.position());
             sendPacketNum++;
             sendByteNum = sendByteNum + payloadBuffer.limit() - payloadBuffer.position();
             refreshTime = System.currentTimeMillis();

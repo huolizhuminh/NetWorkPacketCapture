@@ -1,9 +1,10 @@
 package com.minhui.vpn;
 
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author minhui.zhu
@@ -22,8 +23,12 @@ public class BaseNetConnection {
     public long receivePacketNum;
     public long sendPacketNum;
     public long refreshTime = SystemClock.currentThreadTimeMillis();
-   public AppInfo appInfo;
+    public AppInfo appInfo;
+    public boolean isSSL;
     public int port;
+    public String url;
+    protected ArrayList<ConversationData> conversation = new ArrayList<>();
+
     static class NetConnectionComparator implements Comparator<BaseNetConnection> {
 
         @Override
@@ -35,8 +40,9 @@ public class BaseNetConnection {
         }
     }
 
-
-
+    public ArrayList<ConversationData> getConversation() {
+        return conversation;
+    }
     @Override
     public String toString() {
         return "BaseNetConnection{" +

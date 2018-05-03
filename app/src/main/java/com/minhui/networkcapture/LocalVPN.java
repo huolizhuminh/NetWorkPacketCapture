@@ -26,15 +26,19 @@ import android.net.VpnService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Pair;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.minhui.vpn.BaseNetConnection;
+import com.minhui.vpn.ConversationData;
 import com.minhui.vpn.LocalVPNService;
 import com.minhui.vpn.VPNConnectManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -66,6 +70,7 @@ public class LocalVPN extends Activity {
     private String selectPackage;
     private String selectName;
 
+    private List<BaseNetConnection> allNetConnection;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,6 +108,30 @@ public class LocalVPN extends Activity {
         packageId.setText(selectName!=null?selectName:
                 selectPackage!=null?selectPackage:getString(R.string.all));
         vpnButton.setEnabled(true);
+        channelList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if(allNetConnection==null){
+                    return;
+                }
+                if(position>allNetConnection.size()-1){
+                    return;
+                }
+                BaseNetConnection connection = allNetConnection.get(position);
+                if(!BaseNetConnection.TCP.equals(connection.type)){
+                    return;
+                }
+                if(connection.hostName==null){
+                    return;
+
+                }
+                ArrayList<ConversationData> conversation = connection.getConversation();
+                if(conversation.isEmpty()){
+                    return;
+                }
+                PacketDetailActivity.startActivity(LocalVPN.this,conversation);
+            }
+        });
     }
 
 
@@ -149,9 +178,12 @@ public class LocalVPN extends Activity {
     private void startTimer() {
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
+
+
             @Override
             public void run() {
-                final List<BaseNetConnection> allNetConnection = VPNConnectManager.getInstance().getAllNetConnection();
+                allNetConnection = VPNConnectManager.getInstance().getAllNetConnection();
+
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -168,11 +200,7 @@ public class LocalVPN extends Activity {
         if (allNetConnection == null || allNetConnection.isEmpty()) {
             return;
         }
-       /* String summerText = "TotalSendPacket" + vpnConnectManager.getTotalSendPacket()
-                + ",TotalSendByte:" + vpnConnectManager.getTotalSendNum()
-                + ",TotalReceivePacket:" + vpnConnectManager.getTotalReceivePacket()
-                + ",TotalReceiveByte:" + vpnConnectManager.getTotalReceiveByteNum();
-        summerState.setText(summerText);*/
+
         if (connectionAdapter == null) {
             connectionAdapter = new ConnectionAdapter(this, allNetConnection);
             channelList.setAdapter(connectionAdapter);
