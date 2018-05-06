@@ -16,11 +16,14 @@
 
 package com.minhui.networkcapture;
 
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -29,7 +32,9 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TableLayout;
@@ -40,13 +45,16 @@ import com.minhui.vpn.VPNConnectManager;
 
 import java.util.ArrayList;
 
+import static com.minhui.networkcapture.AppConstants.DATA_SAVE;
+import static com.minhui.networkcapture.AppConstants.DEFAULT_PACAGE_NAME;
+import static com.minhui.networkcapture.AppConstants.DEFAULT_PACKAGE_ID;
+
 
 public class VPNCaptureActivity extends FragmentActivity {
     private static final int VPN_REQUEST_CODE = 101;
     private static final int REQUEST_PACKAGE = 103;
-    private static final String DATA_SAVE = "saveData";
-    private static final String DEFAULT_PACKAGE_ID = "default_package_id";
-    private static final String DEFAULT_PACAGE_NAME = "default_package_name";
+    private static String TAG = "VPNCaptureActivity";
+
     private BroadcastReceiver vpnStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -100,10 +108,100 @@ public class VPNCaptureActivity extends FragmentActivity {
         initChildFragment();
         initViewPager();
         initTab();
+        //推荐用户进行留评
+        boolean hasFullUseApp = sharedPreferences.getBoolean(AppConstants.HAS_FULL_USE_APP, false);
+        if (hasFullUseApp) {
+            boolean hasShowRecommand = sharedPreferences.getBoolean(AppConstants.HAS_SHOW_RECOMMAND, false);
+            if (!hasShowRecommand) {
+                sharedPreferences.edit().putBoolean(AppConstants.HAS_SHOW_RECOMMAND, true).apply();
+                showRecommand();
+            }
+
+        }
+    }
+
+    private void showRecommand() {
+        new AlertDialog
+                .Builder(this)
+                .setTitle(getString(R.string.do_you_like_the_app))
+                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showGotoStarDialog();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showGotoDiscussDialog();
+                        dialog.dismiss();
+                    }
+
+                })
+                .show();
+
+
+    }
+
+    private void showGotoStarDialog() {
+        new AlertDialog
+                .Builder(this)
+                .setTitle(getString(R.string.do_you_want_star))
+                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture";
+
+                        launchBrowser(url);
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+
+                })
+                .show();
+    }
+
+    private void showGotoDiscussDialog() {
+        new AlertDialog
+                .Builder(this)
+                .setTitle(getString(R.string.go_to_give_the_issue))
+                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String url = "https://github.com/huolizhuminh/NetWorkPacketCapture/issues";
+                        launchBrowser(url);
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+
+                })
+                .show();
+    }
+
+    public void launchBrowser(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        Uri content_url = Uri.parse(url);
+        intent.setData(content_url);
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException | SecurityException e) {
+            Log.d(TAG, "failed to launchBrowser " + e.getMessage());
+        }
     }
 
     private void initViewPager() {
-        simpleFragmentAdapter=new FragmentPagerAdapter(getSupportFragmentManager()) {
+        simpleFragmentAdapter = new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
                 return baseFragments.get(position);
@@ -114,7 +212,7 @@ public class VPNCaptureActivity extends FragmentActivity {
                 return baseFragments.size();
             }
         };
-   //     simpleFragmentAdapter = new SimpleFragmentAdapter(baseFragments, getSupportFragmentManager());
+        //     simpleFragmentAdapter = new SimpleFragmentAdapter(baseFragments, getSupportFragmentManager());
         viewPager = (ViewPager) findViewById(R.id.container_vp);
         viewPager.setAdapter(simpleFragmentAdapter);
     }
@@ -133,9 +231,10 @@ public class VPNCaptureActivity extends FragmentActivity {
             public void onTabSelected(TabLayout.Tab tab) {
 
             }
+
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
-             //   viewPager.setCurrentItem(tab.getPosition());
+                //   viewPager.setCurrentItem(tab.getPosition());
             }
 
             @Override
@@ -148,8 +247,8 @@ public class VPNCaptureActivity extends FragmentActivity {
 
     private void initChildFragment() {
         baseFragments = new ArrayList<>();
-     // BaseFragment captureFragment = new SimpleFragment();
-           BaseFragment captureFragment = new CaptureFragment();
+        // BaseFragment captureFragment = new SimpleFragment();
+        BaseFragment captureFragment = new CaptureFragment();
         BaseFragment historyFragment = new HistoryFragment();
         BaseFragment settingFragment = new SettingFragment();
         baseFragments.add(captureFragment);

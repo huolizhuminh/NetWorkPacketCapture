@@ -2,6 +2,7 @@ package com.minhui.networkcapture;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -26,6 +27,7 @@ public class PacketDetailActivity extends Activity {
     public static final String CONVERSATION_DATA = "conversation_data";
     private ListView list;
     private ArrayList<ConversationData> conversationDatas;
+    private SharedPreferences sp;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -35,6 +37,8 @@ public class PacketDetailActivity extends Activity {
         conversationDatas = getIntent().getParcelableArrayListExtra(CONVERSATION_DATA);
         DetailAdapter detailAdapter = new DetailAdapter();
         list.setAdapter(detailAdapter);
+        sp = getSharedPreferences(AppConstants.DATA_SAVE, MODE_PRIVATE);
+        sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP,true).apply();
     }
 
     public static void startActivity(Activity context, ArrayList<ConversationData> data) {

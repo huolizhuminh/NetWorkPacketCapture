@@ -12,7 +12,7 @@ import com.tencent.bugly.crashreport.CrashReport;
  */
 
 public class MyApplication extends Application {
-    public static final String BUGLY_ID="d85b922f09";
+    public static final String BUGLY_ID="6c905fa4a7";
     @Override
     public void onCreate() {
         super.onCreate();

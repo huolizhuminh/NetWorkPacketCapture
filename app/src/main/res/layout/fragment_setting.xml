@@ -34,7 +34,18 @@
 
 
             </FrameLayout>
+            <FrameLayout
+                android:id="@+id/about_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp">
 
+                <TextView
+                    style="@style/setting_text_explain"
+                    android:text="@string/about_app" />
+
+
+            </FrameLayout>
 
         </LinearLayout>
 

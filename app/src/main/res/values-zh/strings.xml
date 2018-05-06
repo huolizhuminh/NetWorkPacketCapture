@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">抓包精灵</string>
+    <string name="all">抓所有的包</string>
+    <string name="ssl">SSL</string>
+    <string name="find">抓包</string>
+    <string name="history">记录</string>
+    <string name="setting">设置</string>
+    <string name="clear_history">清除历史记录</string>
+    <string name="success_clear_history_data">成功清除所有历史记录！</string>
+    <string name="select_package">选择您想要抓包的引用</string>
+    <string name="system">系统</string>
+    <string name="unknow">未知应用</string>
+    <string name="capture_data">历史抓包记录</string>
+    <string name="do_you_like_the_app">您喜欢这个应用吗？</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="do_you_want_star">去Github上点亮这个引用吗?</string>
+    <string name="cancel">取消</string>
+    <string name="go_to_give_the_issue">去Github上展示您出现的问题吗？</string>
+    <string name="about_app">关于抓包精灵</string>
+    <string name="email_address">邮箱:821579706@qq.com</string>
+    <string name="qq_address">QQ群:692721889</string>
+    <string name="github_address">Github地址:https://github.com/huolizhuminh/NetWorkPacketCapture</string>
+</resources>

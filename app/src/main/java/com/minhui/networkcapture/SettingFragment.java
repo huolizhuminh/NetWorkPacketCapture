@@ -1,6 +1,8 @@
 package com.minhui.networkcapture;
 
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -34,6 +36,12 @@ public class SettingFragment extends BaseFragment {
             @Override
             public void onClick(View v) {
                 clearHistoryData();
+            }
+        });
+        view.findViewById(R.id.about_container).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(),AboutActivity.class));
             }
         });
         handler = new Handler();
