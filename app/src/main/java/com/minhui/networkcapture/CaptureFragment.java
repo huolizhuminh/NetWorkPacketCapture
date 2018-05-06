@@ -130,18 +130,18 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 List<BaseNetConnection> connections = portHostService.refreshConnectionAppInfo();
-                if (connections == null) {
-                    return;
-                }
-                allNetConnection = new ArrayList<>();
+                if (connections != null) {
+                    allNetConnection = new ArrayList<>();
 
-                for (BaseNetConnection connection : connections) {
-                    if (connection.appInfo != null
-                            && BaseNetConnection.TCP.equals(connection.type)
-                            && !packageName.equals(connection.appInfo.pkgs.getAt(0))) {
-                        allNetConnection.add(connection);
+                    for (BaseNetConnection connection : connections) {
+                        if (connection.appInfo != null
+                                && BaseNetConnection.TCP.equals(connection.type)
+                                && !packageName.equals(connection.appInfo.pkgs.getAt(0))) {
+                            allNetConnection.add(connection);
+                        }
                     }
                 }
+
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -167,11 +167,6 @@ public class CaptureFragment extends BaseFragment {
     }
 
     private void refreshView(List<BaseNetConnection> allNetConnection) {
-
-        if (allNetConnection == null || allNetConnection.isEmpty()) {
-            return;
-        }
-
         if (connectionAdapter == null) {
             connectionAdapter = new ConnectionAdapter(context, allNetConnection);
             channelList.setAdapter(connectionAdapter);

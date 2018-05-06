@@ -1,6 +1,7 @@
 package com.minhui.vpn;
 
 import android.net.VpnService;
+import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -61,7 +62,7 @@ class VPNServer implements CloseableRun {
 
         if (packet.isTCP()) {
             processTCPPacket(packet);
-        } else {
+        } else if (packet.isUDP()) {
             processUDPPacket(packet);
         }
     }
@@ -170,16 +171,23 @@ class VPNServer implements CloseableRun {
     }
 
     private void closeAllTCPConn() {
+        PortHostService instance = PortHostService.getInstance();
+        if (instance != null) {
+            instance.refreshConnectionAppInfo();
+        }
         synchronized (tcpLock) {
-            synchronized (tcpLock) {
-                Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
-                while (it.hasNext()) {
-                    TCPConnection tcpConnection = it.next().getValue();
-                    tcpConnection.closeChannelAndClearCache();
-                    tcpCache.remove(tcpConnection.getIpAndPort());
-                    it.remove();
-                }
+
+            Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
+            int i=0;
+            int y=tcpCache.size();
+            while (it.hasNext()) {
+                TCPConnection tcpConnection = it.next().getValue();
+                tcpConnection.closeChannelAndClearCache();
+                it.remove();
+                i++;
             }
+            Log.d(TAG,"closeAllTCPConn iterate time "+i+"  cache size "+y);
+
         }
 
     }

@@ -4,13 +4,15 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.TextUtils;
 
+import java.io.Serializable;
+
 /**
  * @author minhui.zhu
  *         Created by minhui.zhu on 2018/4/30.
  *         Copyright © 2017年 Oceanwing. All rights reserved.
  */
 
-public class PackageNames implements Parcelable {
+public class PackageNames implements Parcelable,Serializable {
     public static final Creator<PackageNames> CREATOR = new Creator<PackageNames>() {
         @Override
         public PackageNames createFromParcel(Parcel in) {
@@ -22,7 +24,7 @@ public class PackageNames implements Parcelable {
             return new PackageNames[size];
         }
     };
-    private final String[] pkgs;
+    public final String[] pkgs;
 
     public static PackageNames newInstance(String[] pkgs) {
         return new PackageNames(pkgs);

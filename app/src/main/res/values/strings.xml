@@ -5,4 +5,10 @@
     <string name="find">Capture</string>
     <string name="history">History</string>
     <string name="setting">Setting</string>
+    <string name="clear_history">Clear History Data</string>
+    <string name="success_clear_history_data">Success clear history data!</string>
+    <string name="select_package">Select the app which you want capture packet. </string>
+    <string name="system">System</string>
+    <string name="unknow">Unknow</string>
+    <string name="capture_data">History Capture Packet</string>
 </resources>

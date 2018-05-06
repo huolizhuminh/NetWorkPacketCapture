@@ -39,7 +39,7 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
-class ACache {
+public class ACache {
     public static final int TIME_HOUR = 60 * 60;
     public static final int TIME_DAY = TIME_HOUR * 24;
     private static final int MAX_SIZE = 1000 * 1000 * 50; // 50 mb
@@ -465,7 +465,7 @@ class ACache {
         }
 
         private File newFile(String key) {
-            return new File(cacheDir, key.hashCode() + "");
+            return new File(cacheDir, key);
         }
 
         private boolean remove(String key) {

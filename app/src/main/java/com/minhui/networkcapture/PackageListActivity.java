@@ -74,7 +74,12 @@ public class PackageListActivity extends Activity {
                 finish();
             }
         });
-
+        findViewById(R.id.back).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 
     class ShowPackageAdapter extends BaseAdapter {
@@ -132,17 +137,17 @@ public class PackageListActivity extends Activity {
                     if (iconHolder.holderPosition != position) {
                         return;
                     }
-                   final Drawable drawable = packageShowInfo.applicationInfo.loadIcon(pm);
-                   runOnUiThread(new Runnable() {
-                       @Override
-                       public void run() {
-                           Holder iconHolder = (Holder) alertIconView.getTag();
-                           if (iconHolder.holderPosition != position) {
-                               return;
-                           }
-                           holder.icon.setImageDrawable(drawable);
-                       }
-                   });
+                    final Drawable drawable = packageShowInfo.applicationInfo.loadIcon(pm);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Holder iconHolder = (Holder) alertIconView.getTag();
+                            if (iconHolder.holderPosition != position) {
+                                return;
+                            }
+                            holder.icon.setImageDrawable(drawable);
+                        }
+                    });
                 }
             });
             //      holder.icon.setImageDrawable(packageShowInfo.applicationInfo.loadIcon(pm));

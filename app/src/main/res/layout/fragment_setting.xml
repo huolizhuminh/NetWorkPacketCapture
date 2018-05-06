@@ -1,12 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:apks="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/bg_F8F8F9"
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="setting"
 
-        />
-</RelativeLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:divider="@drawable/divider_horizontal"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:showDividers="middle">
+
+
+            <FrameLayout
+                android:id="@+id/clear_cache_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="15dp">
+
+                <TextView
+                    style="@style/setting_text_explain"
+                    android:drawableLeft="@mipmap/clear_cache"
+                    android:text="@string/clear_history" />
+
+
+            </FrameLayout>
+
+
+        </LinearLayout>
+
+
+
+</ScrollView>

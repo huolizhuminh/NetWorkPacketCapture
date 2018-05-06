@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Transmission Control Block
  */
-public class TCPConnection extends BaseNetConnection {
+public class TCPConnection extends BaseNetConnection implements Serializable {
     private static final String TAG = TCPConnection.class.getSimpleName();
     private static final int VALID_TCP_DATA_SIZE = 10;
     private final VpnService vpnService;
@@ -64,10 +65,12 @@ public class TCPConnection extends BaseNetConnection {
     private int interestingOps;
     private int remainingWindow;
     private String requestData;
-    protected Vector<ConversationData> conversation = new Vector<>();
+
     private boolean hasWriteConnConfig = false;
+    long vpnStartTime;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
+        super();
         this.vpnService = vpnService;
         this.selector = selector;
         this.vpnServer = vpnServer;
@@ -87,6 +90,7 @@ public class TCPConnection extends BaseNetConnection {
         };
         port = packet.tcpHeader.sourcePort;
         type = TCP;
+        vpnStartTime=LocalVPNService.getInstance().getVpnStartTime();
 
     }
 
@@ -120,7 +124,7 @@ public class TCPConnection extends BaseNetConnection {
         if (getToNetPacketNum() == 0) {
             return;
         }
-        checkAndSaveConnConfig();
+
 
         try {
             Packet toNetPacket = getToNetPacket(myAcknowledgementNum);
@@ -173,7 +177,7 @@ public class TCPConnection extends BaseNetConnection {
         }
     }
 
-    private void checkAndSaveConnConfig() {
+   /* private void checkAndSaveConnConfig() {
         if (hasWriteConnConfig) {
             return;
         }
@@ -187,8 +191,7 @@ public class TCPConnection extends BaseNetConnection {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                String fileDir = Environment.getExternalStorageDirectory()
-                        + "/VpnCapture/Conversation/"
+                String fileDir = VPNConstants.BASE_DIR
                         + TimeFormatUtil.formatYYMMDDHHMMSS(LocalVPNService.getInstance().getVpnStartTime());
                 File parentFile = new File(fileDir);
                 if (!parentFile.exists()) {
@@ -200,7 +203,7 @@ public class TCPConnection extends BaseNetConnection {
             }
         });
 
-    }
+    }*/
 
     private void saveConversationData(final ByteBuffer payloadBuffer, final int playLoadSize, final boolean isRequest) {
 
@@ -229,10 +232,6 @@ public class TCPConnection extends BaseNetConnection {
 
     }
 
-    public String getUniqueName() {
-        String uinID = ipAndPort + connectionStartTime;
-        return String.valueOf(uinID.hashCode());
-    }
 
     private void processReadFromNet() {
         Log.d(TAG, "FromNet ipAndPort:" + ipAndPort);
@@ -654,17 +653,32 @@ public class TCPConnection extends BaseNetConnection {
             @Override
             public void run() {
                 try {
-                    String fileDir = Environment.getExternalStorageDirectory()
-                            + "/VpnCapture/Conversation/"
-                            + TimeFormatUtil.formatYYMMDDHHMMSS(LocalVPNService.getInstance().getVpnStartTime());
-                    File parentFile = new File(fileDir);
+                    if (receiveByteNum == 0 && sendByteNum == 0) {
+                        return;
+                    }
+                    String configFileDir = VPNConstants.BASE_DIR
+                            + TimeFormatUtil.formatYYMMDDHHMMSS(vpnStartTime)
+                            + "/config";
+                    File parentFile = new File(configFileDir);
                     if (!parentFile.exists()) {
                         parentFile.mkdirs();
                     }
-                    ACache aCache = ACache.get(parentFile);
-                    aCache.put(getUniqueName(), conversation);
-                } catch (Exception e) {
+                    ACache configACache = ACache.get(parentFile);
+                    BaseNetConnection baseConnection = new BaseNetConnection(TCPConnection.this);
+                    configACache.put(getUniqueName(), baseConnection);
 
+                    String dataFileDir = VPNConstants.BASE_DIR
+                            + TimeFormatUtil.formatYYMMDDHHMMSS(vpnStartTime)
+                            + "/data";
+                    File dataParentFile = new File(dataFileDir);
+                    if (!dataParentFile.exists()) {
+                        dataParentFile.mkdirs();
+                    }
+                    ACache dataACache = ACache.get(dataParentFile);
+                    dataACache.put(getUniqueName(), conversation);
+
+                } catch (Exception e) {
+                    VPNLog.e(TAG, "failed to saveData ");
                 }
             }
         });

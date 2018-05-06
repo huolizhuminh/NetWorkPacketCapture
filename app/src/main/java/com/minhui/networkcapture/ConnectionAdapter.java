@@ -11,8 +11,6 @@ import com.minhui.vpn.AppInfo;
 import com.minhui.vpn.BaseNetConnection;
 import com.minhui.vpn.TimeFormatUtil;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,7 +34,7 @@ public class ConnectionAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return netConnections.size();
+        return netConnections==null?0:netConnections.size();
     }
 
     @Override
@@ -54,7 +52,7 @@ public class ConnectionAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         Holder holder;
         if (convertView == null) {
-            convertView = View.inflate(context, R.layout.item_packet, null);
+            convertView = View.inflate(context, R.layout.item_connection, null);
             holder = new Holder(convertView);
             convertView.setTag(holder);
         } else {

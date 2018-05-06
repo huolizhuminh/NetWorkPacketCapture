@@ -22,4 +22,12 @@ public abstract class BaseFragment extends Fragment {
     }
 
     abstract int getLayout();
+
+    public void onVisible() {
+
+    }
+
+    public void onInVisible() {
+
+    }
 }

@@ -7,5 +7,12 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-
+    <style name="setting_text_explain">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/color_33</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:layout_gravity">center|left</item>
+        <item name="android:drawablePadding">15dp</item>
+    </style>
 </resources>

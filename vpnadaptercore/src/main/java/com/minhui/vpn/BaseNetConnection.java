@@ -30,20 +30,43 @@ public class BaseNetConnection implements Serializable {
     public int port;
     public String url;
     public long connectionStartTime = System.currentTimeMillis();
-    ;
+    protected transient Vector<ConversationData> conversation = new Vector<>();
 
+    public BaseNetConnection(BaseNetConnection connection) {
+        type = connection.type;
+        ipAndPort = connection.ipAndPort;
+        hostName = connection.hostName;
+        sendByteNum = connection.sendByteNum;
+        receiveByteNum = connection.receiveByteNum;
+        receivePacketNum = connection.receivePacketNum;
+        sendPacketNum = connection.sendPacketNum;
+        refreshTime = connection.refreshTime;
+        appInfo = connection.appInfo;
+        isSSL = connection.isSSL;
+        port = connection.port;
+        url = connection.url;
+        connectionStartTime = connection.connectionStartTime;
+        conversation = connection.conversation;
+    }
 
-    static class NetConnectionComparator implements Comparator<BaseNetConnection> {
+    public BaseNetConnection() {
+
+    }
+
+   public static class NetConnectionComparator implements Comparator<BaseNetConnection> {
 
         @Override
         public int compare(BaseNetConnection o1, BaseNetConnection o2) {
             if (o1 == o2) {
                 return 0;
             }
-            return (int) (o2.refreshTime - o1.refreshTime);
+            return Long.compare(o2.refreshTime, o1.refreshTime);
         }
     }
-
+    public String getUniqueName() {
+        String uinID = ipAndPort + connectionStartTime;
+        return String.valueOf(uinID.hashCode());
+    }
 
     @Override
     public String toString() {

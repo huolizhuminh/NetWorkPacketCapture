@@ -28,6 +28,9 @@
         <activity
             android:name="com.minhui.networkcapture.PacketDetailActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name="com.minhui.networkcapture.ConnectionListActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
