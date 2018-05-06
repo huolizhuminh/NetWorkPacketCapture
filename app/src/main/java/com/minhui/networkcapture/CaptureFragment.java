@@ -130,6 +130,9 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 List<BaseNetConnection> connections = portHostService.refreshConnectionAppInfo();
+                if (connections == null) {
+                    return;
+                }
                 allNetConnection = new ArrayList<>();
 
                 for (BaseNetConnection connection : connections) {

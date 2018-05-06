@@ -95,7 +95,11 @@ public class PortHostService extends Service {
 
     public List<BaseNetConnection> refreshConnectionAppInfo() {
         NetFileManager.getInstance().refresh();
-        VPNServer vpnServer = LocalVPNService.getInstance().getVpnServer();
+        LocalVPNService instance = LocalVPNService.getInstance();
+        if(instance==null){
+            return null;
+        }
+        VPNServer vpnServer = instance.getVpnServer();
         if (vpnServer == null) {
             return null;
         }
