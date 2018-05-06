@@ -116,13 +116,13 @@ public class ConnectionAdapter extends BaseAdapter {
 
         Holder(View view) {
             baseView = view;
-            icon = view.findViewById(R.id.select_icon);
-            refreshTime = view.findViewById(R.id.refresh_time);
-            size = view.findViewById(R.id.net_size);
-            isSSL = view.findViewById(R.id.is_ssl);
-            processName = view.findViewById(R.id.app_name);
-            netState = view.findViewById(R.id.net_state);
-            hostName = view.findViewById(R.id.url);
+            icon = (ImageView) view.findViewById(R.id.select_icon);
+            refreshTime = (TextView) view.findViewById(R.id.refresh_time);
+            size = (TextView) view.findViewById(R.id.net_size);
+            isSSL = (TextView) view.findViewById(R.id.is_ssl);
+            processName = (TextView) view.findViewById(R.id.app_name);
+            netState = (TextView) view.findViewById(R.id.net_state);
+            hostName = (TextView) view.findViewById(R.id.url);
         }
 
     }

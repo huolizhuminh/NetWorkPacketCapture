@@ -16,6 +16,8 @@ import java.nio.channels.Selector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class LocalVPNService extends VpnService {
     public static final String ACTION_START_VPN = "com.minhui.START_VPN";
@@ -34,7 +36,7 @@ public class LocalVPNService extends VpnService {
     private static final String CHINA_DNS_FIRST = "114.114.114.114";
     public static final String BROADCAST_VPN_STATE = "com.minhui.localvpn.VPN_STATE";
     public static final String SELECT_PACKAGE_ID = "select_protect_package_id";
-    private static VpnService instance;
+    private static LocalVPNService instance;
 
     private ParcelFileDescriptor vpnInterface = null;
 
@@ -45,6 +47,7 @@ public class LocalVPNService extends VpnService {
     private VPNServer vpnServer;
     private VPNClient vpnInPutRunnable;
     private String selectPackage;
+    private long vpnStartTime;
 
     @Override
     public void onCreate() {
@@ -127,6 +130,8 @@ public class LocalVPNService extends VpnService {
             executorService.submit(vpnServer);
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
             Log.i(TAG, "Started");
+            vpnStartTime = System.currentTimeMillis();
+            PortHostService.startParse(getApplicationContext());
         } catch (Exception e) {
             Log.w(TAG, "Error starting service", e);
             cleanup();
@@ -149,6 +154,7 @@ public class LocalVPNService extends VpnService {
         closeRunnable(vpnInPutRunnable);
         SocketUtils.closeResources(vpnInterface);
         LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
+        PortHostService.stopParse(getApplicationContext());
         instance = null;
     }
 
@@ -165,11 +171,15 @@ public class LocalVPNService extends VpnService {
         cleanup();
     }
 
-    public static VpnService getInstance() {
+    public static LocalVPNService getInstance() {
         return instance;
     }
 
     public VPNServer getVpnServer() {
         return vpnServer;
+    }
+
+    public long getVpnStartTime() {
+        return vpnStartTime;
     }
 }

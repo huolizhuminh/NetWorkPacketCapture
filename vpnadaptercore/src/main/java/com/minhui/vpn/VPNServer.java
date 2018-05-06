@@ -234,57 +234,47 @@ class VPNServer implements CloseableRun {
 
     public List<BaseNetConnection> getNetConnections() {
         List<BaseNetConnection> netConnections = new ArrayList<>();
-        String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
-        String selectPackage = ((LocalVPNService) LocalVPNService.getInstance()).getSelectPackage();
+
 
         synchronized (tcpLock) {
             Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
             while (it.hasNext()) {
                 TCPConnection connection = it.next().getValue();
-                if (connection.appInfo == null) {
-                    Integer uid = NetFileManager.getInstance().getUid(connection.port);
+                checkAndAddConn(connection, netConnections);
 
-                    if (uid != null) {
-                        VPNLog.d(TAG, "can not find uid");
-                        connection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
-                    }
-                }
-                String capturePkg = connection.appInfo == null ? null : connection.appInfo.pkgs.getAt(0);
-                if (connection.appInfo != null && packageName.equals(capturePkg)) {
-                    continue;
-                }
-                if (selectPackage != null && !selectPackage.equals(capturePkg)) {
-                    continue;
-                }
-                netConnections.add(connection);
             }
         }
         synchronized (udpConnections) {
             Iterator<Map.Entry<String, UDPConnection>> it = udpConnections.entrySet().iterator();
             while (it.hasNext()) {
                 UDPConnection udpConnection = it.next().getValue();
-                if (udpConnection.appInfo == null) {
-                    Integer uid = NetFileManager.getInstance().getUid(udpConnection.port);
-
-                    if (uid != null) {
-                        VPNLog.d(TAG, "can not find uid");
-                        udpConnection.appInfo = AppInfo.createFromUid(VPNConnectManager.getInstance().getContext(), uid);
-                    }
-                }
-                String capturePkg = udpConnection.appInfo == null ? null : udpConnection.appInfo.pkgs.getAt(0);
-                if (udpConnection.appInfo != null && packageName.equals(capturePkg)) {
-                    continue;
-                }
-                if (selectPackage != null && !selectPackage.equals(capturePkg)) {
-                    continue;
-                }
-                netConnections.add(udpConnection);
+                checkAndAddConn(udpConnection, netConnections);
 
             }
         }
         Collections.sort(netConnections, new BaseNetConnection.NetConnectionComparator());
-        NetFileManager.getInstance().refresh();
+
 
         return netConnections;
+    }
+
+    private void checkAndAddConn(BaseNetConnection connection, List<BaseNetConnection> netConnections) {
+        String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
+        String selectPackage = ((LocalVPNService) LocalVPNService.getInstance()).getSelectPackage();
+
+        if (connection.appInfo == null) {
+            netConnections.add(connection);
+            return;
+        }
+        String capturePkg = connection.appInfo.pkgs.getAt(0);
+
+        if (connection.appInfo != null && packageName.equals(capturePkg)) {
+            return;
+        }
+        if (selectPackage != null && !selectPackage.equals(capturePkg)) {
+            return;
+        }
+
+        netConnections.add(connection);
     }
 }

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NetFileManager {
     public final static int TYPE_TCP = 0;
@@ -30,7 +31,7 @@ public class NetFileManager {
     private final static int DATA_LOCAL=2;
     private final static int DATA_REMOTE = 3;
     private final static int DATA_UID = 8;
-    Map<Integer, Integer> processHost = new ArrayMap<>();
+    Map<Integer, Integer> processHost = new ConcurrentHashMap<>();
     private File[] file;
     private long[] lastTime;
     private StringBuilder sbBuilder = new StringBuilder();

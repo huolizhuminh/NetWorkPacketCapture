@@ -4,13 +4,17 @@ package com.minhui.vpn;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
+import android.content.Context;
 import android.net.VpnService;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.util.Log;
-import android.util.Pair;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -21,14 +25,14 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Transmission Control Block
  */
-class TCPConnection extends BaseNetConnection {
+public class TCPConnection extends BaseNetConnection {
     private static final String TAG = TCPConnection.class.getSimpleName();
     private static final int VALID_TCP_DATA_SIZE = 10;
     private final VpnService vpnService;
@@ -60,6 +64,8 @@ class TCPConnection extends BaseNetConnection {
     private int interestingOps;
     private int remainingWindow;
     private String requestData;
+    protected Vector<ConversationData> conversation = new Vector<>();
+    private boolean hasWriteConnConfig = false;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         this.vpnService = vpnService;
@@ -73,7 +79,6 @@ class TCPConnection extends BaseNetConnection {
         theirAcknowledgementNum = mySequenceNum;
         myAcknowledgementNum = theirSequenceNum + 1;
         clientWindow = packet.tcpHeader.getWindow();
-
         keyHandler = new VPNServer.KeyHandler() {
             @Override
             public void onKeyReady(SelectionKey key) {
@@ -84,7 +89,6 @@ class TCPConnection extends BaseNetConnection {
         type = TCP;
 
     }
-
 
 
     private void processKey(SelectionKey key) {
@@ -102,29 +106,36 @@ class TCPConnection extends BaseNetConnection {
             }
         }
 
+
+    }
+
+
+    public ArrayList<ConversationData> getConversation() {
+        ArrayList<ConversationData> conversationData = new ArrayList<>();
+        conversationData.addAll(conversation);
+        return conversationData;
     }
 
     private void processWriteToNet() {
         if (getToNetPacketNum() == 0) {
             return;
         }
+        checkAndSaveConnConfig();
+
         try {
             Packet toNetPacket = getToNetPacket(myAcknowledgementNum);
             if (toNetPacket != null) {
                 ByteBuffer payloadBuffer = toNetPacket.backingBuffer;
                 int playLoadSize = payloadBuffer.limit() - payloadBuffer.position();
-                if (!isSSL && hostName != null) {
-                    byte[] array = payloadBuffer.array();
-                    String requestData=null;
-                    try {
-                        requestData = new String(array, payloadBuffer.position(), playLoadSize,"utf-8");
-                    }catch (Exception e){
-
-                    }
-                    if(requestData!=null){
-                        conversation.add(new ConversationData(true, requestData));
-                    }
-
+                saveConversationData(payloadBuffer, playLoadSize, true);
+                if (sendByteNum == 0 && playLoadSize > VALID_TCP_DATA_SIZE) {
+                    toNetPacket.parseHttpRequestHeader();
+                    hostName = toNetPacket.getHostName();
+                    isSSL = toNetPacket.isSSL();
+                    url = toNetPacket.getRequestUrl();
+                }
+                if (!isSSL && hostName == null && playLoadSize > VALID_TCP_DATA_SIZE) {
+                    hostName = toNetPacket.parseAndGetHostName();
                 }
                 while (payloadBuffer.hasRemaining()) {
                     channel.write(payloadBuffer);
@@ -160,6 +171,67 @@ class TCPConnection extends BaseNetConnection {
             outputQueue.offer(packet);
             vpnServer.closeTCPConnection(this);
         }
+    }
+
+    private void checkAndSaveConnConfig() {
+        if (hasWriteConnConfig) {
+            return;
+        }
+        if (appInfo == null) {
+            return;
+        }
+        if (sendByteNum < VALID_TCP_DATA_SIZE) {
+            return;
+        }
+        hasWriteConnConfig = true;
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                String fileDir = Environment.getExternalStorageDirectory()
+                        + "/VpnCapture/Conversation/"
+                        + TimeFormatUtil.formatYYMMDDHHMMSS(LocalVPNService.getInstance().getVpnStartTime());
+                File parentFile = new File(fileDir);
+                if (!parentFile.exists()) {
+                    parentFile.mkdirs();
+                }
+                ACache aCache = ACache.get(parentFile);
+                BaseNetConnection baseNetConnection = TCPConnection.this;
+                aCache.put(getUniqueName(), baseNetConnection);
+            }
+        });
+
+    }
+
+    private void saveConversationData(final ByteBuffer payloadBuffer, final int playLoadSize, final boolean isRequest) {
+
+        //记录数据请求
+        if (isSSL) {
+            return;
+        }
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                byte[] array = payloadBuffer.array();
+                String requestData = null;
+                try {
+                    requestData = new String(array, HEADER_SIZE, playLoadSize, "utf-8");
+                } catch (Exception e) {
+                    VPNLog.d(TAG, "failed to saveConversationData");
+                }
+                if (requestData != null) {
+                    conversation.add(new ConversationData(isRequest, requestData));
+                }
+
+
+            }
+        });
+
+
+    }
+
+    public String getUniqueName() {
+        String uinID = ipAndPort + connectionStartTime;
+        return String.valueOf(uinID.hashCode());
     }
 
     private void processReadFromNet() {
@@ -212,27 +284,14 @@ class TCPConnection extends BaseNetConnection {
                     "size:" + readBytes + referencePacket.ip4Header.sourceAddress +
                     referencePacket.tcpHeader.destinationPort);
             putToDevicePacket(mySequenceNum, packet);
-            mySequenceNum += readBytes; // Next sequence number
+            // Next sequence number
+            mySequenceNum += readBytes;
             receiveBuffer.position(HEADER_SIZE + readBytes);
             VPNConnectManager.getInstance().addReceiveNum(packet, readBytes);
             receiveByteNum = receiveByteNum + readBytes;
             receivePacketNum++;
             refreshTime = System.currentTimeMillis();
-
-            if (!isSSL && hostName != null) {
-                byte[] array = packet.backingBuffer.array();
-                String requestData = null;
-                try {
-                    requestData = new String(array, HEADER_SIZE, readBytes,"utf-8");
-                } catch (UnsupportedEncodingException e) {
-                    Log.d(TAG,"failed to getrequestData error is "+e.getMessage());
-                    e.printStackTrace();
-                }
-                if(requestData!=null){
-                    conversation.add(new ConversationData(false, requestData));
-                }
-
-            }
+            saveConversationData(packet.backingBuffer, readBytes, false);
         }
 
         outputQueue.offer(packet);
@@ -276,12 +335,6 @@ class TCPConnection extends BaseNetConnection {
 
     private void processSendACK(Packet currentPacket) {
         Packet.TCPHeader tcpHeader = currentPacket.tcpHeader;
-        if (sendByteNum == 0 && currentPacket.playLoadSize > VALID_TCP_DATA_SIZE) {
-            currentPacket.parseHttpRequestHeader();
-            hostName = currentPacket.getHostName();
-            isSSL = currentPacket.isSSL();
-            url = currentPacket.getRequestUrl();
-        }
 
 
         if (theirAcknowledgementNum < tcpHeader.acknowledgementNumber) {
@@ -296,7 +349,7 @@ class TCPConnection extends BaseNetConnection {
             return;
         } else if (TCPStatus.LAST_ACK == status) {
             Log.d(TAG, "processSendACK  LAST_ACK " + ipAndPort);
-            closeCleanly(currentPacket.backingBuffer);
+            vpnServer.closeTCPConnection(this);
             return;
         }
         Log.d(TAG, "SendACK size " + currentPacket.playLoadSize + "toDevice:" + getToDevicePacketSize() +
@@ -368,12 +421,9 @@ class TCPConnection extends BaseNetConnection {
     }
 
     private void processSendRST(Packet packet) {
-        closeCleanly(packet.backingBuffer);
-    }
-
-    private void closeCleanly(ByteBuffer buffer) {
         vpnServer.closeTCPConnection(this);
     }
+
 
     private void processSendDuplicateSYN(Packet sendPacket) {
         if (TCPStatus.SYN_SENT == status) {
@@ -581,7 +631,6 @@ class TCPConnection extends BaseNetConnection {
         try {
             selectionKey.cancel();
             channel.close();
-
             status = TCPStatus.LAST_ACK;
             Log.d(TAG, "closeChannelAndClearCache ipAndPort" + ipAndPort);
             Iterator<Map.Entry<Long, Packet>> iterator = toDevicePacket.entrySet().iterator();
@@ -594,9 +643,32 @@ class TCPConnection extends BaseNetConnection {
             while ((toNetPacketIterator.hasNext())) {
                 iterator.remove();
             }
+            saveData();
         } catch (Exception e) {
             Log.d(TAG, "closeChannelAndClearCache failed e" + e.getStackTrace());
         }
+    }
+
+    private void saveData() {
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String fileDir = Environment.getExternalStorageDirectory()
+                            + "/VpnCapture/Conversation/"
+                            + TimeFormatUtil.formatYYMMDDHHMMSS(LocalVPNService.getInstance().getVpnStartTime());
+                    File parentFile = new File(fileDir);
+                    if (!parentFile.exists()) {
+                        parentFile.mkdirs();
+                    }
+                    ACache aCache = ACache.get(parentFile);
+                    aCache.put(getUniqueName(), conversation);
+                } catch (Exception e) {
+
+                }
+            }
+        });
+
     }
 
     private void updateKey() {
@@ -645,10 +717,6 @@ class TCPConnection extends BaseNetConnection {
         return keyHandler;
     }
 
-    boolean needClear(long currentTime) {
-        return (isInConnectingStatus(status) && currentTime - buildTime > TIME_OUT) ||
-                (isInClosingStatus(status) && currentTime - startCloseTime > TIME_OUT);
-    }
 
     // TCP has more states, but we need only these
     enum TCPStatus {

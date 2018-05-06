@@ -437,7 +437,7 @@ class Packet implements Serializable {
         }
     }
 
-    public static String getHttpHost(String[] headerLines) {
+    private String getHttpHost(String[] headerLines) {
 
         String requestLine = headerLines[0];
         if (requestLine.startsWith("GET") || requestLine.startsWith("POST") || requestLine.startsWith("HEAD")
@@ -448,12 +448,19 @@ class Packet implements Serializable {
                     String name = nameValueStrings[0].toLowerCase(Locale.ENGLISH).trim();
                     String value = nameValueStrings[1].trim();
                     if ("host".equals(name)) {
+                        Log.d(TAG, "value is " + value);
                         return value;
                     }
                 }
             }
         }
         return null;
+    }
+
+    public String parseAndGetHostName() {
+        String headerString = new String(backingBuffer.array(), FIRST_TCP_DATA, playLoadSize);
+        String[] headerLines = headerString.split("\\r\\n");
+        return getHttpHost(headerLines);
     }
 
     /**

@@ -16,6 +16,7 @@
                 <action android:name="android.net.VpnService" />
             </intent-filter>
         </service>
+        <service android:name=".PortHostService" android:exported="false"/>
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

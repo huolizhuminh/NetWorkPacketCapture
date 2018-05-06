@@ -3,6 +3,7 @@ package com.minhui.vpn;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * @author minhui.zhu
@@ -11,11 +12,14 @@ import java.util.Date;
  */
 
 public class TimeFormatUtil {
-
+    private static DateFormat HHMMSSSFormat = new SimpleDateFormat("HH:mm:ss:s", Locale.getDefault());
+    private static DateFormat formatYYMMDDHHMMSSFormat=new SimpleDateFormat("yyyy:MM:dd HH:mm:ss:s", Locale.getDefault());
     public static String formatHHMMSSMM(long time) {
-        String formart = "HH:mm:ss:s";
         Date date = new Date(time);
-        DateFormat dateFormat = new SimpleDateFormat(formart);
-        return dateFormat.format(date);
+        return HHMMSSSFormat.format(date);
+    }
+    public static String formatYYMMDDHHMMSS(long time) {
+        Date date = new Date(time);
+        return formatYYMMDDHHMMSSFormat.format(date);
     }
 }

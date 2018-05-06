@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-class UDPConnection extends BaseNetConnection {
+public class UDPConnection extends BaseNetConnection {
 
 
     private static final String TAG = UDPConnection.class.getSimpleName();

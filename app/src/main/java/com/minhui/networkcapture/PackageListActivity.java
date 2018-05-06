@@ -40,10 +40,10 @@ public class PackageListActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_package_list);
-        pg = findViewById(R.id.pg);
+        pg = (ProgressBar) findViewById(R.id.pg);
 
         pm = getPackageManager();
-        packageListView = findViewById(R.id.package_list);
+        packageListView = (ListView) findViewById(R.id.package_list);
         ThreadProxy.getInstance().execute(new Runnable() {
 
             private ShowPackageAdapter showPackageAdapter;
@@ -168,8 +168,8 @@ public class PackageListActivity extends Activity {
 
             Holder(View view, int position) {
                 baseView = view;
-                appName = view.findViewById(R.id.app_name);
-                icon = view.findViewById(R.id.select_icon);
+                appName = (TextView) view.findViewById(R.id.app_name);
+                icon = (ImageView) view.findViewById(R.id.select_icon);
                 this.holderPosition = position;
             }
         }

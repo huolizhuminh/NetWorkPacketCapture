@@ -2,9 +2,11 @@ package com.minhui.vpn;
 
 import android.os.SystemClock;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * @author minhui.zhu
@@ -12,7 +14,7 @@ import java.util.List;
  *         Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-public class BaseNetConnection {
+public class BaseNetConnection implements Serializable {
     public static final String TCP = "TCP";
     public static final String UDP = "UPD";
     public String type;
@@ -22,12 +24,14 @@ public class BaseNetConnection {
     public long receiveByteNum;
     public long receivePacketNum;
     public long sendPacketNum;
-    public long refreshTime = SystemClock.currentThreadTimeMillis();
+    public long refreshTime = System.currentTimeMillis();
     public AppInfo appInfo;
     public boolean isSSL;
     public int port;
     public String url;
-    protected ArrayList<ConversationData> conversation = new ArrayList<>();
+    public long connectionStartTime = System.currentTimeMillis();
+    ;
+
 
     static class NetConnectionComparator implements Comparator<BaseNetConnection> {
 
@@ -40,9 +44,7 @@ public class BaseNetConnection {
         }
     }
 
-    public ArrayList<ConversationData> getConversation() {
-        return conversation;
-    }
+
     @Override
     public String toString() {
         return "BaseNetConnection{" +

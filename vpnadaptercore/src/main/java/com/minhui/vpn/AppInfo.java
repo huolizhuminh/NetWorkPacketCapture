@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.util.LruCache;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,7 +19,7 @@ import java.util.Comparator;
  *         Copyright © 2017年 Oceanwing. All rights reserved.
  */
 
-public class AppInfo {
+public class AppInfo implements Serializable {
     private static Drawable defaultIcon = null;
     private static final LruCache<String, IconInfo> iconCache = new LruCache(50);
     public final String allAppName;
@@ -82,7 +83,7 @@ public class AppInfo {
                 return null;
             }
         }
-        if(list.size()==0){
+        if (list.size() == 0) {
             list.add(new Entry("System", "root.uid=0"));
         }
         Collections.sort(list, new Comparator<Entry>() {
@@ -108,7 +109,7 @@ public class AppInfo {
     }
 
     public static synchronized Drawable getIcon(Context ctx, String pkgName, boolean onlyPeek) {
-        Drawable drawable=null;
+        Drawable drawable = null;
         synchronized (AppInfo.class) {
             IconInfo iconInfo;
             if (defaultIcon == null) {

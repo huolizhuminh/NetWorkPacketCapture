@@ -2,4 +2,7 @@
     <string name="app_name">VPNCapture</string>
     <string name="all">all</string>
     <string name="ssl">SSL</string>
+    <string name="find">Capture</string>
+    <string name="history">History</string>
+    <string name="setting">Setting</string>
 </resources>

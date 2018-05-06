@@ -3,6 +3,7 @@ package com.minhui.networkcapture;
 import android.app.Application;
 
 import com.minhui.vpn.VPNConnectManager;
+import com.tencent.bugly.crashreport.CrashReport;
 
 /**
  * @author minhui.zhu
@@ -11,9 +12,11 @@ import com.minhui.vpn.VPNConnectManager;
  */
 
 public class MyApplication extends Application {
+    public static final String BUGLY_ID="d85b922f09";
     @Override
     public void onCreate() {
         super.onCreate();
         VPNConnectManager.getInstance().init(getString(R.string.app_name),getApplicationContext());
+        CrashReport.initCrashReport(getApplicationContext(), BUGLY_ID, false);
     }
 }

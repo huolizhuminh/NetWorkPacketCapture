@@ -31,7 +31,7 @@ public class PacketDetailActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.acitivity_packet_detail);
-        list = findViewById(R.id.detail_list);
+        list = (ListView) findViewById(R.id.detail_list);
         conversationDatas = getIntent().getParcelableArrayListExtra(CONVERSATION_DATA);
         DetailAdapter detailAdapter = new DetailAdapter();
         list.setAdapter(detailAdapter);
@@ -81,7 +81,7 @@ public class PacketDetailActivity extends Activity {
             TextView data;
 
             Holder(View view) {
-                data = view.findViewById(R.id.conversation_text);
+                data = (TextView) view.findViewById(R.id.conversation_text);
             }
         }
     }
