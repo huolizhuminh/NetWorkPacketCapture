@@ -185,7 +185,7 @@ public class NetFileManager {
         if (netInfo == null) {
             return;
         }
-        VPNLog.d(TAG, "saveToMap  port " + netInfo.getSourPort() + " uid " + netInfo.getUid());
+     //   VPNLog.d(TAG, "saveToMap  port " + netInfo.getSourPort() + " uid " + netInfo.getUid());
 
         processHost.put(netInfo.getSourPort(), netInfo.getUid());
 
@@ -242,7 +242,7 @@ public class NetFileManager {
 
     public Integer getUid(int port) {
         Integer uid = processHost.get(port);
-        VPNLog.i(TAG, "getUid : port is   " + port + "   uid is " + uid);
+     //   VPNLog.i(TAG, "getUid : port is   " + port + "   uid is " + uid);
         return uid;
     }
 }

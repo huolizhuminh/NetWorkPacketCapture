@@ -16,6 +16,7 @@
 
 package com.minhui.networkcapture;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -27,6 +28,7 @@ import android.net.Uri;
 import android.net.VpnService;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -43,6 +45,7 @@ import android.widget.TextView;
 import com.minhui.vpn.LocalVPNService;
 import com.minhui.vpn.VPNConnectManager;
 
+import java.security.Permission;
 import java.util.ArrayList;
 
 import static com.minhui.networkcapture.AppConstants.DATA_SAVE;
@@ -53,6 +56,7 @@ import static com.minhui.networkcapture.AppConstants.DEFAULT_PACKAGE_ID;
 public class VPNCaptureActivity extends FragmentActivity {
     private static final int VPN_REQUEST_CODE = 101;
     private static final int REQUEST_PACKAGE = 103;
+    private static final int REQUEST_STORAGE_PERMISSION = 104;
     private static String TAG = "VPNCaptureActivity";
 
     private BroadcastReceiver vpnStateReceiver = new BroadcastReceiver() {
@@ -70,7 +74,7 @@ public class VPNCaptureActivity extends FragmentActivity {
     private TabLayout tabLayout;
     private FragmentPagerAdapter simpleFragmentAdapter;
     private ViewPager viewPager;
-
+   String []needPermissions={Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -115,9 +119,17 @@ public class VPNCaptureActivity extends FragmentActivity {
             if (!hasShowRecommand) {
                 sharedPreferences.edit().putBoolean(AppConstants.HAS_SHOW_RECOMMAND, true).apply();
                 showRecommand();
+            }else {
+                requestStoragePermission();
             }
 
+        }else {
+            requestStoragePermission();
         }
+    }
+
+    private void requestStoragePermission() {
+        ActivityCompat.requestPermissions(this,needPermissions,REQUEST_STORAGE_PERMISSION);
     }
 
     private void showRecommand() {
