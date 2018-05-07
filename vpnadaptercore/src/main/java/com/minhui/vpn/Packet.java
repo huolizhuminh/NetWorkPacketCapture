@@ -444,7 +444,7 @@ class Packet implements Serializable {
                 || requestLine.startsWith("OPTIONS")) {
             for (int i = 1; i < headerLines.length; i++) {
                 String[] nameValueStrings = headerLines[i].split(":");
-                if (nameValueStrings.length == 2) {
+                if (nameValueStrings.length == 2||nameValueStrings.length==3) {
                     String name = nameValueStrings[0].toLowerCase(Locale.ENGLISH).trim();
                     String value = nameValueStrings[1].trim();
                     if ("host".equals(name)) {

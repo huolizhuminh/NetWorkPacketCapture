@@ -57,7 +57,6 @@ public class HistoryFragment extends BaseFragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        historyListAdapter = null;
     }
 
     private void refreshView() {
@@ -67,17 +66,21 @@ public class HistoryFragment extends BaseFragment {
                 File file = new File(VPNConstants.BASE_DIR);
                 rawList = file.list();
                 list = file.list();
-                if (list != null ) {
+                if (list != null) {
                     for (int i = 0; i < list.length; i++) {
                         list[i] = list[i].replace('_', ' ');
                     }
                 }
-
+                if (handler == null) {
+                    return;
+                }
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
                         if (historyListAdapter == null) {
                             historyListAdapter = new HistoryListAdapter();
+                            timeList.setAdapter(historyListAdapter);
+                        } else if (timeList.getAdapter() == null) {
                             timeList.setAdapter(historyListAdapter);
                         } else {
                             historyListAdapter.notifyDataSetChanged();

@@ -74,7 +74,7 @@ public class CaptureFragment extends BaseFragment {
         super.onDestroyView();
         LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(vpnStateReceiver);
         cancelTimer();
-        connectionAdapter = null;
+        //    connectionAdapter = null;
     }
 
     @Override
@@ -172,6 +172,9 @@ public class CaptureFragment extends BaseFragment {
             channelList.setAdapter(connectionAdapter);
         } else {
             connectionAdapter.setNetConnections(allNetConnection);
+            if (channelList.getAdapter() == null) {
+                channelList.setAdapter(connectionAdapter);
+            }
             connectionAdapter.notifyDataSetChanged();
         }
 
