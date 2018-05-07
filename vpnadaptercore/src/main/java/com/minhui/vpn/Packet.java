@@ -815,7 +815,7 @@ class Packet implements Serializable {
             final StringBuilder sb = new StringBuilder("UDPHeader{");
             sb.append("sourcePort=").append(sourcePort);
             sb.append(", destinationPort=").append(destinationPort);
-            sb.append(", length=").append(length);
+            sb.append(", playoffSize=").append(length);
             sb.append(", checksum=").append(checksum);
             sb.append('}');
             return sb.toString();

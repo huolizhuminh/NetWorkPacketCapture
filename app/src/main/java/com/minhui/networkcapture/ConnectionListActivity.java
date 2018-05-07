@@ -21,6 +21,7 @@ import com.minhui.vpn.BaseNetConnection;
 import com.minhui.vpn.ConversationData;
 import com.minhui.vpn.ThreadProxy;
 import com.minhui.vpn.TimeFormatUtil;
+import com.minhui.vpn.VPNConstants;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class ConnectionListActivity extends Activity {
             @Override
             public void run() {
                 baseNetConnections = new ArrayList<>();
-                File file = new File(fileDir + "/config");
+                File file = new File(fileDir );
                 ACache aCache = ACache.get(file);
                 String[] list = file.list();
                 for (String fileName : list) {
@@ -99,7 +100,7 @@ public class ConnectionListActivity extends Activity {
         }
 
         @Override
-        public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
             final BaseNetConnection connection = baseNetConnections.get(position);
             ConnectionHolder connectionHolder = (ConnectionHolder) holder;
             Drawable icon;
@@ -139,7 +140,10 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startPacketDetailActivity(connection.getUniqueName());
+                    if(baseNetConnections.get(position).isSSL){
+                        return;
+                    }
+                    startPacketDetailActivity(baseNetConnections.get(position));
 
 
                 }
@@ -175,25 +179,12 @@ public class ConnectionListActivity extends Activity {
         }
     }
 
-    private void startPacketDetailActivity(final String uniqueName) {
-        ThreadProxy.getInstance().execute(new Runnable() {
-            @Override
-            public void run() {
-                File file = new File(fileDir + "/data");
-                ACache aCache = ACache.get(file);
-                Vector<ConversationData> conversationList = (Vector<ConversationData>) aCache.getAsObject(uniqueName);
-                final ArrayList<ConversationData> conversationDataArray = new ArrayList<>();
-                conversationDataArray.addAll(conversationList);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        PacketDetailActivity.startActivity(ConnectionListActivity.this, conversationDataArray);
-
-                    }
-                });
-            }
-        });
-
+    private void startPacketDetailActivity( BaseNetConnection connection) {
+        String dir = VPNConstants.DATA_DIR
+                + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
+                + "/"
+                + connection.getUniqueName();
+        PacketDetailActivity.startActivity(this, dir);
 
     }
 }

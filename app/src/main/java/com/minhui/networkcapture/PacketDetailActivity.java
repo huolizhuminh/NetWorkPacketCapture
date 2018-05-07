@@ -5,17 +5,24 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.minhui.vpn.ConversationData;
+import com.minhui.vpn.SaveDataFileParser;
+import com.minhui.vpn.ThreadProxy;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author minhui.zhu
@@ -26,24 +33,64 @@ import java.util.ArrayList;
 public class PacketDetailActivity extends Activity {
     public static final String CONVERSATION_DATA = "conversation_data";
     private ListView list;
-    private ArrayList<ConversationData> conversationDatas;
+    private String dir;
     private SharedPreferences sp;
+    private List<SaveDataFileParser.ShowData> showDataList;
+    private ProgressBar pg;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.acitivity_packet_detail);
         list = (ListView) findViewById(R.id.detail_list);
-        conversationDatas = getIntent().getParcelableArrayListExtra(CONVERSATION_DATA);
-        DetailAdapter detailAdapter = new DetailAdapter();
-        list.setAdapter(detailAdapter);
+        dir = getIntent().getStringExtra(CONVERSATION_DATA);
+        pg = findViewById(R.id.pg);
         sp = getSharedPreferences(AppConstants.DATA_SAVE, MODE_PRIVATE);
-        sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP,true).apply();
+        sp.edit().putBoolean(AppConstants.HAS_FULL_USE_APP, true).apply();
+        refreshView();
     }
 
-    public static void startActivity(Activity context, ArrayList<ConversationData> data) {
+    private void refreshView() {
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                File file = new File(dir);
+                File[] files = file.listFiles();
+                List<File> filesList = new ArrayList<>();
+                for (File childFile : files) {
+                    filesList.add(childFile);
+                }
+                Collections.sort(filesList, new Comparator<File>() {
+                    @Override
+                    public int compare(File o1, File o2) {
+                        return (int) (o1.lastModified() - o2.lastModified());
+                    }
+                });
+                showDataList = new ArrayList<>();
+                for (File childFile : filesList) {
+                    SaveDataFileParser.ShowData showData = SaveDataFileParser.parseSaveFile(childFile);
+                    if (showData != null) {
+                        showDataList.add(showData);
+                    }
+
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        DetailAdapter detailAdapter = new DetailAdapter();
+                        list.setAdapter(detailAdapter);
+                        pg.setVisibility(View.GONE);
+                    }
+                });
+
+            }
+        });
+    }
+
+
+    public static void startActivity(Activity context, String dir) {
         Intent intent = new Intent(context, PacketDetailActivity.class);
-        intent.putParcelableArrayListExtra(CONVERSATION_DATA, data);
+        intent.putExtra(CONVERSATION_DATA, dir);
         context.startActivity(intent);
     }
 
@@ -52,7 +99,7 @@ public class PacketDetailActivity extends Activity {
 
         @Override
         public int getCount() {
-            return conversationDatas.size();
+            return showDataList == null ? 0 : showDataList.size();
         }
 
         @Override
@@ -75,18 +122,40 @@ public class PacketDetailActivity extends Activity {
             } else {
                 holder = (Holder) convertView.getTag();
             }
-            ConversationData conversationData = conversationDatas.get(position);
-            holder.data.setText(conversationData.getData());
-            holder.data.setTextColor(conversationData.isRequest() ? Color.RED : Color.GREEN);
+            SaveDataFileParser.ShowData showData = showDataList.get(position);
+            holder.bodyImage.setVisibility(showData.getBodyImage() == null ? View.GONE : View.VISIBLE);
+            holder.bodyData.setVisibility(showData.getBodyImage() == null ? View.VISIBLE : View.GONE);
+            holder.itemView.setBackgroundColor(showData.isRequest() ? Color.CYAN : Color.WHITE);
+            holder.headData.setText(showData.getHeadStr());
+            if (showData.getBodyStr() != null) {
+                holder.bodyData.setText(showData.getBodyStr());
+            } else {
+                holder.bodyData.setText("");
+
+            }
+            if (showData.getBodyImage() != null) {
+                holder.bodyImage.setImageBitmap(showData.getBodyImage());
+            }
+            holder.bodyTitle.setVisibility((showData.isBodyNull()?View.GONE:View.VISIBLE));
             return convertView;
         }
 
         class Holder {
-            TextView data;
+            TextView headData;
+            TextView bodyData;
+            TextView bodyTitle;
+            ImageView bodyImage;
+            View itemView;
 
             Holder(View view) {
-                data = (TextView) view.findViewById(R.id.conversation_text);
+                itemView = view;
+                headData = (TextView) view.findViewById(R.id.conversation_head_text);
+                bodyData = view.findViewById(R.id.conversation_body_text);
+                bodyImage = view.findViewById(R.id.conversation_body_im);
+                bodyTitle=view.findViewById(R.id.body_title);
             }
         }
     }
+
+
 }

@@ -63,7 +63,7 @@ public class HistoryFragment extends BaseFragment {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                File file = new File(VPNConstants.BASE_DIR);
+                File file = new File(VPNConstants.CONFIG_DIR);
                 rawList = file.list();
                 list = file.list();
                 if (list != null) {
@@ -107,7 +107,7 @@ public class HistoryFragment extends BaseFragment {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String fileDir = VPNConstants.BASE_DIR + rawList[position];
+                    String fileDir = VPNConstants.CONFIG_DIR + rawList[position];
                     ConnectionListActivity.openActivity(getActivity(), fileDir);
                 }
             });

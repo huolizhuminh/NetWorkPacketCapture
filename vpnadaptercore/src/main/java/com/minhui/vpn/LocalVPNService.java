@@ -150,11 +150,13 @@ public class LocalVPNService extends VpnService {
         Log.i(TAG, "clean up");
         isRunning = false;
         networkToDeviceQueue = null;
+        PortHostService.getInstance().refreshConnectionAppInfo();
+        PortHostService.stopParse(getApplicationContext());
         closeRunnable(vpnServer);
         closeRunnable(vpnInPutRunnable);
         SocketUtils.closeResources(vpnInterface);
         LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
-        PortHostService.stopParse(getApplicationContext());
+
         instance = null;
     }
 

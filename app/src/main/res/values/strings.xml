@@ -21,4 +21,6 @@
     <string name="email_address">Email:821579706@qq.com</string>
     <string name="qq_address">QQ Group:692721889</string>
     <string name="github_address">Github:https://github.com/huolizhuminh/NetWorkPacketCapture</string>
+    <string name="body">Body:</string>
+    <string name="head">Head:</string>
 </resources>

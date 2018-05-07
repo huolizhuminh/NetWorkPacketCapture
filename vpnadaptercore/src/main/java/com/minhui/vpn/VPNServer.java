@@ -171,10 +171,7 @@ class VPNServer implements CloseableRun {
     }
 
     private void closeAllTCPConn() {
-        PortHostService instance = PortHostService.getInstance();
-        if (instance != null) {
-            instance.refreshConnectionAppInfo();
-        }
+
         synchronized (tcpLock) {
 
             Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();

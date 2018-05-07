@@ -23,7 +23,9 @@ import com.minhui.vpn.NetFileManager;
 import com.minhui.vpn.PortHostService;
 import com.minhui.vpn.TCPConnection;
 import com.minhui.vpn.ThreadProxy;
+import com.minhui.vpn.TimeFormatUtil;
 import com.minhui.vpn.VPNConnectManager;
+import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
 
 import java.util.ArrayList;
@@ -97,14 +99,17 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 BaseNetConnection connection = allNetConnection.get(position);
+                if (connection.isSSL) {
+                    return;
+                }
                 if (!BaseNetConnection.TCP.equals(connection.type)) {
                     return;
                 }
-                ArrayList<ConversationData> conversation = ((TCPConnection) connection).getConversation();
-                if (conversation.isEmpty()) {
-                    return;
-                }
-                PacketDetailActivity.startActivity(getActivity(), conversation);
+                String dir = VPNConstants.DATA_DIR
+                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
+                        + "/"
+                        + connection.getUniqueName();
+                PacketDetailActivity.startActivity(getActivity(), dir);
             }
         });
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,

@@ -11,4 +11,6 @@ public interface VPNConstants {
     int BUFFER_SIZE = 2560;
     int MAX_PAYLOAD_SIZE = 2520;
     String BASE_DIR = Environment.getExternalStorageDirectory() + "/VpnCapture/Conversation/";
+    String DATA_DIR = BASE_DIR + "data/";
+    String CONFIG_DIR=BASE_DIR+"config/";
 }

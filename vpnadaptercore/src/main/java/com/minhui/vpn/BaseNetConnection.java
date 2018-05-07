@@ -31,6 +31,7 @@ public class BaseNetConnection implements Serializable {
     public String url;
     public long connectionStartTime = System.currentTimeMillis();
     protected transient Vector<ConversationData> conversation = new Vector<>();
+    public long vpnStartTime;
 
     public BaseNetConnection(BaseNetConnection connection) {
         type = connection.type;
@@ -47,13 +48,14 @@ public class BaseNetConnection implements Serializable {
         url = connection.url;
         connectionStartTime = connection.connectionStartTime;
         conversation = connection.conversation;
+        vpnStartTime = connection.vpnStartTime;
     }
 
     public BaseNetConnection() {
 
     }
 
-   public static class NetConnectionComparator implements Comparator<BaseNetConnection> {
+    public static class NetConnectionComparator implements Comparator<BaseNetConnection> {
 
         @Override
         public int compare(BaseNetConnection o1, BaseNetConnection o2) {
@@ -63,6 +65,7 @@ public class BaseNetConnection implements Serializable {
             return Long.compare(o2.refreshTime, o1.refreshTime);
         }
     }
+
     public String getUniqueName() {
         String uinID = ipAndPort + connectionStartTime;
         return String.valueOf(uinID.hashCode());
