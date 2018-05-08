@@ -65,6 +65,9 @@ public class ConnectionAdapter extends BaseAdapter {
             if (connection.getAppInfo().pkgs != null) {
                 holder.icon.setImageDrawable(AppInfo.getIcon(context, connection.getAppInfo().pkgs.getAt(0)));
             }
+        }else {
+            holder.processName.setText(context.getString(R.string.unknow));
+            holder.icon.setImageDrawable(context.getDrawable(R.drawable.sym_def_app_icon));
         }
         holder.isSSL.setVisibility(View.GONE);
         holder.hostName.setText(null);

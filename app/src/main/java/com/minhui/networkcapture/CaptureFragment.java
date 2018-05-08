@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.minhui.vpn.ACache;
+import com.minhui.vpn.AppInfo;
 import com.minhui.vpn.BaseNetConnection;
 import com.minhui.vpn.LocalVPNService;
 import com.minhui.vpn.PortHostService;
@@ -26,6 +27,7 @@ import com.minhui.vpn.VPNConstants;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -124,6 +126,30 @@ public class CaptureFragment extends BaseFragment {
             @Override
             public void run() {
                 allNetConnection = VPNConnectManager.getInstance().getAllConn();
+                if (allNetConnection == null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            refreshView(allNetConnection);
+                        }
+                    });
+                    return;
+                }
+                Iterator<BaseNetConnection> iterator = allNetConnection.iterator();
+                String packageName = getContext().getPackageName();
+                while (iterator.hasNext()) {
+                    BaseNetConnection next = iterator.next();
+                    if (BaseNetConnection.UDP.equals(next.getType())) {
+                        iterator.remove();
+                        continue;
+                    }
+                    AppInfo appInfo = next.getAppInfo();
+                    if (appInfo != null
+                            && appInfo.pkgs.getAt(0) != null
+                            && packageName.equals(appInfo.pkgs.getAt(0))) {
+                        iterator.remove();
+                    }
+                }
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

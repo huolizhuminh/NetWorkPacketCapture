@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.minhui.vpn.ThreadProxy;
@@ -24,6 +26,8 @@ import java.io.FileFilter;
 public class SettingFragment extends BaseFragment {
 
     private Handler handler;
+    private ProgressBar pb;
+    private CheckBox includeCurrentCapture;
 
     @Override
     int getLayout() {
@@ -36,6 +40,11 @@ public class SettingFragment extends BaseFragment {
         view.findViewById(R.id.clear_cache_container).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (isDeleting) {
+                    return;
+                }
+                isDeleting = true;
+                pb.setVisibility(View.VISIBLE);
                 clearHistoryData();
             }
         });
@@ -45,17 +54,28 @@ public class SettingFragment extends BaseFragment {
                 startActivity(new Intent(getActivity(), AboutActivity.class));
             }
         });
+        includeCurrentCapture = view.findViewById(R.id.check_current_capture);
+
+        pb = view.findViewById(R.id.pb);
         handler = new Handler();
     }
 
+    private boolean isDeleting;
+
     private void clearHistoryData() {
         ThreadProxy.getInstance().execute(new Runnable() {
+
+
             @Override
             public void run() {
+
                 File file = new File(VPNConstants.BASE_DIR);
                 FileUtils.deleteFile(file, new FileFilter() {
                     @Override
                     public boolean accept(File pathname) {
+                        if (includeCurrentCapture.isChecked()) {
+                            return true;
+                        }
                         if (!pathname.exists()) {
                             return false;
                         }
@@ -69,9 +89,11 @@ public class SettingFragment extends BaseFragment {
                         return !absolutePath.contains(lastVpnStartTimeStr);
                     }
                 });
+                isDeleting = false;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
+                        pb.setVisibility(View.GONE);
                         showMessage(getString(R.string.success_clear_history_data));
                     }
                 });

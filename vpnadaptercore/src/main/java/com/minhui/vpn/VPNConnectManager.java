@@ -79,10 +79,14 @@ public class VPNConnectManager {
         ACache aCache = ACache.get(file);
         String[] list = file.list();
         ArrayList<BaseNetConnection> baseNetConnections = new ArrayList<>();
-        for (String fileName : list) {
-            BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
-            baseNetConnections.add(netConnection);
+        if(list!=null){
+
+            for (String fileName : list) {
+                BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
+                baseNetConnections.add(netConnection);
+            }
         }
+
         PortHostService portHostService = PortHostService.getInstance();
         if (portHostService != null) {
             List<BaseNetConnection> aliveConnInfo = portHostService.getAndRefreshConnInfo();

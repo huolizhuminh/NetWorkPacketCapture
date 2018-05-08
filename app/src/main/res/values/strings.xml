@@ -23,4 +23,7 @@
     <string name="github_address">Github:https://github.com/huolizhuminh/NetWorkPacketCapture</string>
     <string name="body">Body:</string>
     <string name="head">Head:</string>
+    <string name="clear_current_capture">Include current capture</string>
+    <string name="request_head">Request Head</string>
+    <string name="response_head">Response Head</string>
 </resources>

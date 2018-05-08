@@ -57,6 +57,14 @@ public class PacketDetailActivity extends Activity {
             public void run() {
                 File file = new File(dir);
                 File[] files = file.listFiles();
+                if (files == null || files.length == 0) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            finish();
+                        }
+                    });
+                }
                 List<File> filesList = new ArrayList<>();
                 for (File childFile : files) {
                     filesList.add(childFile);
@@ -134,8 +142,10 @@ public class PacketDetailActivity extends Activity {
             holder.headData.setTextColor(showData.isRequest() ? requestTextColor : responseTextColor);
             holder.bodyData.setTextColor(showData.isRequest() ? requestTextColor : responseTextColor);
             holder.headData.setText(showData.getHeadStr());
+            holder.headTitle.setText(getString(showData.isRequest() ? R.string.request_head : R.string.response_head));
             if (showData.getBodyStr() != null) {
-                holder.bodyData.setText(showData.getBodyStr());
+                String showStr=" " + showData.getBodyStr();
+                holder.bodyData.setText(showStr);
             } else {
                 holder.bodyData.setText("");
 
@@ -153,6 +163,7 @@ public class PacketDetailActivity extends Activity {
             TextView bodyTitle;
             ImageView bodyImage;
             View itemView;
+            TextView headTitle;
 
             Holder(View view) {
                 itemView = view.findViewById(R.id.container);
@@ -160,6 +171,7 @@ public class PacketDetailActivity extends Activity {
                 bodyData = view.findViewById(R.id.conversation_body_text);
                 bodyImage = view.findViewById(R.id.conversation_body_im);
                 bodyTitle = view.findViewById(R.id.body_title);
+                headTitle = view.findViewById(R.id.head_title);
             }
         }
     }

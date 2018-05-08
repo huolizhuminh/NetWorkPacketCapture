@@ -6,7 +6,9 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp">
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_btn">
+
         <TextView
             android:id="@+id/date"
             android:layout_width="match_parent"
@@ -15,6 +17,12 @@
             android:gravity="center"
             android:textSize="18sp"
             tools:text="qq" />
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="2px"
+            android:layout_below="@id/date"
+            android:background="@drawable/divider_horizontal" />
     </RelativeLayout>
 
 </RelativeLayout>

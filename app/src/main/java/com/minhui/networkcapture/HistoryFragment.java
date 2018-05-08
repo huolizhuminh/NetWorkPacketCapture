@@ -15,6 +15,10 @@ import com.minhui.vpn.ThreadProxy;
 import com.minhui.vpn.VPNConstants;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author minhui.zhu
@@ -42,12 +46,12 @@ public class HistoryFragment extends BaseFragment {
         refreshContainer = view.findViewById(R.id.refresh_container);
         timeList = view.findViewById(R.id.time_list);
         timeList.setLayoutManager(new LinearLayoutManager(getActivity()));
-        refreshView();
+        getDataAndRefreshView();
         refreshContainer.setEnabled(true);
         refreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshView();
+                getDataAndRefreshView();
             }
         });
         handler = new Handler();
@@ -59,36 +63,53 @@ public class HistoryFragment extends BaseFragment {
         super.onDestroyView();
     }
 
-    private void refreshView() {
+    private void getDataAndRefreshView() {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
                 File file = new File(VPNConstants.CONFIG_DIR);
-                rawList = file.list();
-                list = file.list();
-                if (list != null) {
-                    for (int i = 0; i < list.length; i++) {
-                        list[i] = list[i].replace('_', ' ');
-                    }
-                }
-                if (handler == null) {
+                File[] files = file.listFiles();
+                if(files==null||files.length==0){
+                    list=null;
+                    refreshView();
                     return;
                 }
-                handler.post(new Runnable() {
+                List<File> fileList = new ArrayList<>();
+                Collections.addAll(fileList, files);
+                Collections.sort(fileList, new Comparator<File>() {
                     @Override
-                    public void run() {
-                        if (historyListAdapter == null) {
-                            historyListAdapter = new HistoryListAdapter();
-                            timeList.setAdapter(historyListAdapter);
-                        } else if (timeList.getAdapter() == null) {
-                            timeList.setAdapter(historyListAdapter);
-                        } else {
-                            historyListAdapter.notifyDataSetChanged();
-                        }
-                        refreshContainer.setRefreshing(false);
+                    public int compare(File o1, File o2) {
+                        return (int) (o2.lastModified() - o1.lastModified());
                     }
                 });
+                list = new String[fileList.size()];
+                rawList=new String[fileList.size()];
+                for (int i = 0; i < list.length; i++) {
+                    String name = fileList.get(i).getName();
+                    rawList[i]=name;
+                    list[i] =name.replace('_', ' ');
+                }
+                refreshView();
+            }
+        });
+    }
 
+    private void refreshView() {
+        if (handler == null) {
+            return;
+        }
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (historyListAdapter == null) {
+                    historyListAdapter = new HistoryListAdapter();
+                    timeList.setAdapter(historyListAdapter);
+                } else if (timeList.getAdapter() == null) {
+                    timeList.setAdapter(historyListAdapter);
+                } else {
+                    historyListAdapter.notifyDataSetChanged();
+                }
+                refreshContainer.setRefreshing(false);
             }
         });
     }

@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/head_title"
             android:layout_marginTop="10dp"
-            tools:text="get" />
+            android:text="get"  />
 
         <TextView
             android:id="@+id/body_title"

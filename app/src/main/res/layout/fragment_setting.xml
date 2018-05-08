@@ -1,54 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:apks="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/bg_F8F8F9"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
 
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_F8F8F9"
+        android:orientation="vertical">
 
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dip"
+            android:background="@android:color/white"
             android:divider="@drawable/divider_horizontal"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:background="@android:color/white"
             android:showDividers="middle">
 
 
-            <FrameLayout
+            <RelativeLayout
                 android:id="@+id/clear_cache_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="15dp">
+                android:background="@drawable/bg_btn"
+                android:padding="15dp">
 
                 <TextView
+                    android:id="@+id/clear_title"
                     style="@style/setting_text_explain"
                     android:drawableLeft="@mipmap/clear_cache"
+                    android:layout_centerVertical="true"
                     android:text="@string/clear_history" />
 
+                <CheckBox
+                    android:id="@+id/check_current_capture"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toRightOf="@id/clear_title"
+                    android:text="@string/clear_current_capture"
+                    android:layout_marginLeft="10dp"
+                    />
+            </RelativeLayout>
 
-            </FrameLayout>
-            <FrameLayout
+            <RelativeLayout
                 android:id="@+id/about_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="15dp">
+                android:background="@drawable/bg_btn"
+                android:padding="15dp">
 
                 <TextView
                     style="@style/setting_text_explain"
                     android:text="@string/about_app" />
 
 
-            </FrameLayout>
+            </RelativeLayout>
 
         </LinearLayout>
 
 
+    </ScrollView>
 
-</ScrollView>
+    <ProgressBar
+        android:id="@+id/pb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+</RelativeLayout>
