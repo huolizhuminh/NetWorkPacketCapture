@@ -3,7 +3,9 @@ package com.minhui.vpn;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,32 +28,70 @@ public class VPNConnectManager {
     Map<String, String> hosts = new HashMap<>();
     private ExecutorService executor;
     List<VPNListener> listeners = new ArrayList<>();
-    private  Context context;
-    private  String name;
+    private Context context;
+    private String name;
+    private long lastVpnStartTime = 0;
+    private String lastVpnStartTimeFormat = null;
 
-    public  void
-
-    init(String appName, Context initContext) {
-        this.name=appName;
-        this.context=initContext;
+    public void init(String appName, Context initContext) {
+        this.name = appName;
+        this.context = initContext;
         mConnectivityManager = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetFileManager.getInstance().init(initContext);
 
     }
-    public  Context getContext() {
+
+    public long getLastVpnStartTime() {
+        return lastVpnStartTime;
+    }
+
+    public String getLastVpnStartTimeStr() {
+        return lastVpnStartTimeFormat;
+    }
+
+    public Context getContext() {
         return context;
     }
 
-    public  String getAppName() {
+    public String getAppName() {
         return name;
     }
+
     public void registerListener(VPNListener listener) {
         listeners.add(listener);
     }
 
     public void unRegisterListener(VPNListener listener) {
         listeners.remove(listener);
+    }
+
+    public void setLastVpnStartTime(long time) {
+        lastVpnStartTime = time;
+        lastVpnStartTimeFormat = TimeFormatUtil.formatYYMMDDHHMMSS(lastVpnStartTime);
+    }
+
+    public List<BaseNetConnection> getAllConn() {
+        if (lastVpnStartTimeFormat == null) {
+            return null;
+        }
+        File file = new File(VPNConstants.CONFIG_DIR + lastVpnStartTimeFormat);
+        ACache aCache = ACache.get(file);
+        String[] list = file.list();
+        ArrayList<BaseNetConnection> baseNetConnections = new ArrayList<>();
+        for (String fileName : list) {
+            BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
+            baseNetConnections.add(netConnection);
+        }
+        PortHostService portHostService = PortHostService.getInstance();
+        if (portHostService != null) {
+            List<BaseNetConnection> aliveConnInfo = portHostService.getAndRefreshConnInfo();
+            if (aliveConnInfo != null) {
+                baseNetConnections.addAll(aliveConnInfo);
+            }
+        }
+        Collections.sort(baseNetConnections, new BaseNetConnection.NetConnectionComparator());
+        return baseNetConnections;
     }
 
     private static class Inner {

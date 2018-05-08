@@ -2,12 +2,10 @@ package com.minhui.vpn;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.preference.PreferenceActivity;
-import android.util.Log;
+import android.text.TextUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import okio.BufferedSource;
 import okio.GzipSource;
@@ -48,15 +46,11 @@ public class SaveDataFileParser {
             }
             Source fileSource = Okio.source(childFile);
             BufferedSource buffer = Okio.buffer(fileSource);
-            HashMap<String, String> headMap = new HashMap<>();
             String line = buffer.readUtf8LineStrict(headerLimit);
             StringBuilder headBuilder = new StringBuilder();
             while (line != null && line.length() > 0) {
                 headerLimit = HEADER_LIMIT - line.length();
                 String[] split = line.split(":");
-                if (split.length > 1) {
-                    headMap.put(split[0], split[1]);
-                }
                 if (CONTENT_ENCODING.equalsIgnoreCase(split[0])) {
                     encodingType = split[1];
                 }
@@ -88,8 +82,25 @@ public class SaveDataFileParser {
             return showData;
         } catch (Exception e) {
             VPNLog.d(TAG, "parseSaveFile " + e.getMessage());
+            return getRawDataFromFile(childFile);
         }
-        return null;
+
+    }
+
+    private static ShowData getRawDataFromFile(File childFile) {
+        Source fileSource = null;
+        ShowData showData = new ShowData();
+        try {
+            String name = childFile.getName();
+            showData.isRequest = name.contains(TcpDataSaveHelper.REQUEST);
+            fileSource = Okio.source(childFile);
+            BufferedSource buffer = Okio.buffer(fileSource);
+            showData.headStr = buffer.readUtf8();
+            return showData;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
 
     }
 
@@ -128,7 +139,7 @@ public class SaveDataFileParser {
         }
 
         public boolean isBodyNull() {
-            return bodyStr == null && bodyImage == null;
+            return TextUtils.isEmpty(bodyStr) && bodyImage == null;
         }
     }
 }

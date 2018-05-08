@@ -59,34 +59,34 @@ public class ConnectionAdapter extends BaseAdapter {
             holder = (Holder) convertView.getTag();
         }
         BaseNetConnection connection = netConnections.get(position);
-        if (connection.appInfo != null) {
+        if (connection.getAppInfo() != null) {
 
-            holder.processName.setText(connection.appInfo.leaderAppName);
-            if (connection.appInfo.pkgs != null) {
-                holder.icon.setImageDrawable(AppInfo.getIcon(context, connection.appInfo.pkgs.getAt(0)));
+            holder.processName.setText(connection.getAppInfo().leaderAppName);
+            if (connection.getAppInfo().pkgs != null) {
+                holder.icon.setImageDrawable(AppInfo.getIcon(context, connection.getAppInfo().pkgs.getAt(0)));
             }
         }
         holder.isSSL.setVisibility(View.GONE);
         holder.hostName.setText(null);
         holder.hostName.setVisibility(View.GONE);
-        if (BaseNetConnection.TCP.equals(connection.type)) {
-            if (connection.isSSL) {
+        if (BaseNetConnection.TCP.equals(connection.getType())) {
+            if (connection.isSSL()) {
                 holder.isSSL.setVisibility(View.VISIBLE);
             }
 
-            if (connection.url != null) {
-                holder.hostName.setText(connection.url);
+            if (connection.getUrl() != null) {
+                holder.hostName.setText(connection.getUrl());
             } else {
-                holder.hostName.setText(connection.hostName);
+                holder.hostName.setText(connection.getHostName());
             }
-            if(connection.url!=null||connection.hostName!=null){
+            if(connection.getUrl()!=null||connection.getHostName()!=null){
                 holder.hostName.setVisibility(View.VISIBLE);
             }
         }
 
-        holder.netState.setText(connection.ipAndPort);
-        holder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.refreshTime));
-        int sumByte = (int) (connection.sendByteNum + connection.receiveByteNum);
+        holder.netState.setText(connection.getIpAndPort());
+        holder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.getRefreshTime()));
+        int sumByte = (int) (connection.getSendByteNum() + connection.getReceiveByteNum());
 
         String showSum;
         if (sumByte > 1000000) {

@@ -42,7 +42,6 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
     long myAcknowledgementNum;
     private long theirAcknowledgementNum;
     private TCPStatus status;
-    long buildTime;
 
     private final HashMap<Long, Packet> toDevicePacket = new HashMap<>();
     long startCloseTime;
@@ -58,11 +57,11 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
     private final VPNServer.KeyHandler keyHandler;
     private int interestingOps;
     private int remainingWindow;
-    private String requestData;
 
-    private boolean hasWriteConnConfig = false;
+    private volatile boolean hasWriteConnConfig = false;
 
     private final TcpDataSaveHelper tcpDataSaveHelper;
+    private final String lastVpnStartTimeStr;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         super();
@@ -85,9 +84,9 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
         };
         port = packet.tcpHeader.sourcePort;
         type = TCP;
-        vpnStartTime = LocalVPNService.getInstance().getVpnStartTime();
-        String formatVpnStartTime = TimeFormatUtil.formatYYMMDDHHMMSS(vpnStartTime);
-        tcpDataSaveHelper = new TcpDataSaveHelper(VPNConstants.DATA_DIR + formatVpnStartTime + "/" + getUniqueName());
+        vpnStartTime = VPNConnectManager.getInstance().getLastVpnStartTime();
+        lastVpnStartTimeStr = VPNConnectManager.getInstance().getLastVpnStartTimeStr();
+        tcpDataSaveHelper = new TcpDataSaveHelper(VPNConstants.DATA_DIR + lastVpnStartTimeStr + "/" + getUniqueName());
     }
 
 
@@ -105,22 +104,13 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
                 updateKey();
             }
         }
-
-
     }
 
-
-    public ArrayList<ConversationData> getConversation() {
-        ArrayList<ConversationData> conversationData = new ArrayList<>();
-        conversationData.addAll(conversation);
-        return conversationData;
-    }
 
     private void processWriteToNet() {
         if (getToNetPacketNum() == 0) {
             return;
         }
-
 
         try {
             Packet toNetPacket = getToNetPacket(myAcknowledgementNum);
@@ -155,7 +145,7 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
                 releaseToNetPacket();
                 packet.updateTCPBuffer(responseBuffer, (byte) (Packet.TCPHeader.ACK | Packet.TCPHeader.PSH), mySequenceNum, myAcknowledgementNum, 0);
                 outputQueue.offer(packet);
-
+                refreshAppInfo();
                 Log.d(TAG, "WriteToNet valid" + " myAck:" + myAcknowledgementNum + "size:  "
                         + playLoadSize + "ToNum" + getToNetPacketNum() + ipAndPort);
 
@@ -196,6 +186,7 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
             Log.d(TAG, "FromNet has no window");
             return;
         }
+        refreshAppInfo();
         int maxPayloadSize = Math.min(remainingClientWindow, VPNConstants.MAX_PAYLOAD_SIZE);
         receiveBuffer.limit(HEADER_SIZE + maxPayloadSize);
 
@@ -247,6 +238,18 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
         }
 
         outputQueue.offer(packet);
+    }
+
+    private void refreshAppInfo() {
+        if (appInfo != null) {
+            return;
+        }
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                PortHostService.getInstance().refreshConnInfo();
+            }
+        });
     }
 
     private void processConnect() {
@@ -521,10 +524,6 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
         }
     }
 
-    String getIpAndPort() {
-        return ipAndPort;
-    }
-
 
     void putToDevicePacket(Long sequenceNum, Packet packet) {
         synchronized (toDevicePacket) {
@@ -602,15 +601,22 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
     }
 
     private void saveConfigData() {
+        if (hasWriteConnConfig) {
+            return;
+        }
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
                 try {
+                    if (hasWriteConnConfig) {
+                        return;
+                    }
                     if (receiveByteNum == 0 && sendByteNum == 0) {
                         return;
                     }
+
                     String configFileDir = VPNConstants.CONFIG_DIR
-                            + TimeFormatUtil.formatYYMMDDHHMMSS(vpnStartTime);
+                            + lastVpnStartTimeStr;
                     File parentFile = new File(configFileDir);
                     if (!parentFile.exists()) {
                         parentFile.mkdirs();
@@ -623,7 +629,7 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
                     ACache configACache = ACache.get(parentFile);
                     BaseNetConnection baseConnection = new BaseNetConnection(TCPConnection.this);
                     configACache.put(getUniqueName(), baseConnection);
-
+                    hasWriteConnConfig = true;
                 } catch (Exception e) {
                     VPNLog.e(TAG, "failed to saveConfigData ");
                 }

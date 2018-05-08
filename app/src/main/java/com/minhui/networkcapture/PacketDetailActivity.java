@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -96,6 +97,10 @@ public class PacketDetailActivity extends Activity {
 
 
     class DetailAdapter extends BaseAdapter {
+        private int requestBg = getColor(R.color.colorAccent_light);
+        private int requestTextColor = getColor(R.color.colorAccent);
+        private int responseBg = getColor(R.color.colorPrimaryDark_light);
+        private int responseTextColor = getColor(R.color.colorPrimaryDark);
 
         @Override
         public int getCount() {
@@ -124,8 +129,10 @@ public class PacketDetailActivity extends Activity {
             }
             SaveDataFileParser.ShowData showData = showDataList.get(position);
             holder.bodyImage.setVisibility(showData.getBodyImage() == null ? View.GONE : View.VISIBLE);
-            holder.bodyData.setVisibility(showData.getBodyImage() == null ? View.VISIBLE : View.GONE);
-            holder.itemView.setBackgroundColor(showData.isRequest() ? Color.CYAN : Color.WHITE);
+            holder.bodyData.setVisibility((TextUtils.isEmpty(showData.getBodyStr())) ? View.GONE : View.VISIBLE);
+            holder.itemView.setBackgroundColor(showData.isRequest() ? requestBg : responseBg);
+            holder.headData.setTextColor(showData.isRequest() ? requestTextColor : responseTextColor);
+            holder.bodyData.setTextColor(showData.isRequest() ? requestTextColor : responseTextColor);
             holder.headData.setText(showData.getHeadStr());
             if (showData.getBodyStr() != null) {
                 holder.bodyData.setText(showData.getBodyStr());
@@ -136,7 +143,7 @@ public class PacketDetailActivity extends Activity {
             if (showData.getBodyImage() != null) {
                 holder.bodyImage.setImageBitmap(showData.getBodyImage());
             }
-            holder.bodyTitle.setVisibility((showData.isBodyNull()?View.GONE:View.VISIBLE));
+            holder.bodyTitle.setVisibility((showData.isBodyNull() ? View.GONE : View.VISIBLE));
             return convertView;
         }
 
@@ -148,11 +155,11 @@ public class PacketDetailActivity extends Activity {
             View itemView;
 
             Holder(View view) {
-                itemView = view;
+                itemView = view.findViewById(R.id.container);
                 headData = (TextView) view.findViewById(R.id.conversation_head_text);
                 bodyData = view.findViewById(R.id.conversation_body_text);
                 bodyImage = view.findViewById(R.id.conversation_body_im);
-                bodyTitle=view.findViewById(R.id.body_title);
+                bodyTitle = view.findViewById(R.id.body_title);
             }
         }
     }

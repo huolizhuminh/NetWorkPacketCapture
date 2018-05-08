@@ -1,6 +1,6 @@
 package com.minhui.networkcapture;
 
-import java.io.File;
+import java.io.*;
 
 /**
  * @author minhui.zhu
@@ -9,8 +9,11 @@ import java.io.File;
  */
 
 class FileUtils {
-    public static void deleteFile(File file) {
+    public static void deleteFile(File file, FileFilter fileFilter) {
         if (file == null) {
+            return;
+        }
+        if (!fileFilter.accept(file)) {
             return;
         }
         if (file.isFile()) {
@@ -23,7 +26,7 @@ class FileUtils {
             return;
         }
         for (File childFile : files) {
-            deleteFile(childFile);
+            deleteFile(childFile, fileFilter);
         }
         file.delete();
     }

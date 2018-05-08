@@ -1,7 +1,6 @@
 package com.minhui.networkcapture;
 
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,9 +9,11 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.minhui.vpn.ThreadProxy;
+import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
 
 import java.io.File;
+import java.io.FileFilter;
 
 /**
  * @author minhui.zhu
@@ -41,7 +42,7 @@ public class SettingFragment extends BaseFragment {
         view.findViewById(R.id.about_container).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(getActivity(),AboutActivity.class));
+                startActivity(new Intent(getActivity(), AboutActivity.class));
             }
         });
         handler = new Handler();
@@ -52,7 +53,22 @@ public class SettingFragment extends BaseFragment {
             @Override
             public void run() {
                 File file = new File(VPNConstants.BASE_DIR);
-                FileUtils.deleteFile(file);
+                FileUtils.deleteFile(file, new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        if (!pathname.exists()) {
+                            return false;
+                        }
+
+                        String lastVpnStartTimeStr = VPNConnectManager.getInstance().getLastVpnStartTimeStr();
+                        if (lastVpnStartTimeStr == null) {
+                            return true;
+                        }
+                        String absolutePath = pathname.getAbsolutePath();
+                        //如果所选择文件是最近一次产生的，则不删除
+                        return !absolutePath.contains(lastVpnStartTimeStr);
+                    }
+                });
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

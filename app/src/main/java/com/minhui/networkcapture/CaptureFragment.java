@@ -10,25 +10,22 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.minhui.vpn.ACache;
 import com.minhui.vpn.BaseNetConnection;
-import com.minhui.vpn.ConversationData;
 import com.minhui.vpn.LocalVPNService;
-import com.minhui.vpn.NetFileManager;
 import com.minhui.vpn.PortHostService;
-import com.minhui.vpn.TCPConnection;
 import com.minhui.vpn.ThreadProxy;
 import com.minhui.vpn.TimeFormatUtil;
 import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
-import com.minhui.vpn.VPNLog;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -99,14 +96,14 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 BaseNetConnection connection = allNetConnection.get(position);
-                if (connection.isSSL) {
+                if (connection.isSSL()) {
                     return;
                 }
-                if (!BaseNetConnection.TCP.equals(connection.type)) {
+                if (!BaseNetConnection.TCP.equals(connection.getType())) {
                     return;
                 }
                 String dir = VPNConstants.DATA_DIR
-                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
+                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
                         + "/"
                         + connection.getUniqueName();
                 PacketDetailActivity.startActivity(getActivity(), dir);
@@ -126,27 +123,7 @@ public class CaptureFragment extends BaseFragment {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                PortHostService portHostService = PortHostService.getInstance();
-                if (portHostService == null) {
-                    return;
-                }
-                String packageName = getContext().getPackageName();
-                if (packageName == null) {
-                    return;
-                }
-                List<BaseNetConnection> connections = portHostService.refreshConnectionAppInfo();
-                if (connections != null) {
-                    allNetConnection = new ArrayList<>();
-
-                    for (BaseNetConnection connection : connections) {
-                        if (connection.appInfo != null
-                                && BaseNetConnection.TCP.equals(connection.type)
-                                && !packageName.equals(connection.appInfo.pkgs.getAt(0))) {
-                            allNetConnection.add(connection);
-                        }
-                    }
-                }
-
+                allNetConnection = VPNConnectManager.getInstance().getAllConn();
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

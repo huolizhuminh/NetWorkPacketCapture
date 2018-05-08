@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,12 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 public class PortHostService extends Service {
     private static final String ACTION = "action";
-    private static final int ACTION_START = 0;
-    private static final int ACTION_STOP = 1;
     private static final String TAG = "PortHostService";
-    boolean isParsing = false;
-    private ScheduledExecutorService scheduledExecutorService;
     private static PortHostService instance;
+    private boolean isRefresh;
 
     @Nullable
     @Override
@@ -37,66 +35,15 @@ public class PortHostService extends Service {
         super.onCreate();
         instance = this;
     }
-    public static PortHostService getInstance(){
+
+    public static PortHostService getInstance() {
         return instance;
     }
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        int action = intent.getIntExtra(ACTION, ACTION_STOP);
-        switch (action) {
-            case ACTION_START:
-                startParseFile();
-                break;
-            default:
-                stopParseFile();
-                break;
-        }
-
-        return START_STICKY;
-
-    }
-
-    private void stopParseFile() {
 
 
-        if (!isParsing) {
-            return;
-        }
-        isParsing = false;
-        if (scheduledExecutorService == null) {
-            return;
-        }
-        try {
-            scheduledExecutorService.shutdownNow();
-        } catch (Exception e) {
-            VPNLog.e(TAG, "stopParseFile error is" + e.getMessage());
-        }
-
-
-    }
-
-    private void startParseFile() {
-        if (isParsing) {
-            return;
-        }
-        isParsing = true;
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                refreshConnectionAppInfo();
-
-
-            }
-        }, 1000, 1000, TimeUnit.MILLISECONDS);
-
-
-    }
-
-    public List<BaseNetConnection> refreshConnectionAppInfo() {
-        NetFileManager.getInstance().refresh();
+    public List<BaseNetConnection> getAndRefreshConnInfo() {
         LocalVPNService instance = LocalVPNService.getInstance();
-        if(instance==null){
+        if (instance == null) {
             return null;
         }
         VPNServer vpnServer = instance.getVpnServer();
@@ -104,6 +51,44 @@ public class PortHostService extends Service {
             return null;
         }
         List<BaseNetConnection> netConnections = vpnServer.getNetConnections();
+        refreshConnInfo(netConnections);
+
+        return netConnections;
+
+    }
+
+    public void refreshConnInfo() {
+
+        LocalVPNService instance = LocalVPNService.getInstance();
+        if (instance == null) {
+            return;
+        }
+        VPNServer vpnServer = instance.getVpnServer();
+        if (vpnServer == null) {
+            return;
+        }
+        refreshConnInfo(vpnServer.getNetConnections());
+
+    }
+
+    private void refreshConnInfo(List<BaseNetConnection> netConnections) {
+        if (isRefresh || netConnections == null) {
+            return;
+        }
+        boolean needRefresh = false;
+        for (BaseNetConnection connection : netConnections) {
+            if (connection.appInfo == null) {
+                needRefresh = true;
+                break;
+            }
+        }
+        if (!needRefresh) {
+            return;
+        }
+        isRefresh = true;
+
+        NetFileManager.getInstance().refresh();
+
         for (BaseNetConnection connection : netConnections) {
             if (connection.appInfo == null) {
                 Integer uid = NetFileManager.getInstance().getUid(connection.port);
@@ -114,19 +99,18 @@ public class PortHostService extends Service {
                 }
             }
         }
-        return netConnections;
+        isRefresh = false;
 
     }
 
+
     public static void startParse(Context context) {
         Intent intent = new Intent(context, PortHostService.class);
-        intent.putExtra(ACTION, ACTION_START);
         context.startService(intent);
     }
 
     public static void stopParse(Context context) {
         Intent intent = new Intent(context, PortHostService.class);
-        intent.putExtra(ACTION, ACTION_STOP);
-        context.startService(intent);
+        context.stopService(intent);
     }
 }

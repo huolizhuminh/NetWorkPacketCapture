@@ -104,28 +104,28 @@ public class ConnectionListActivity extends Activity {
             final BaseNetConnection connection = baseNetConnections.get(position);
             ConnectionHolder connectionHolder = (ConnectionHolder) holder;
             Drawable icon;
-            if (connection.appInfo != null) {
-                icon = AppInfo.getIcon(getApplication(), connection.appInfo.pkgs.getAt(0));
+            if (connection.getAppInfo() != null) {
+                icon = AppInfo.getIcon(getApplication(), connection.getAppInfo().pkgs.getAt(0));
             } else {
                 icon = getDrawable(R.drawable.sym_def_app_icon);
             }
 
             connectionHolder.icon.setImageDrawable(icon);
-            if (connection.appInfo != null) {
-                connectionHolder.processName.setText(connection.appInfo.leaderAppName);
+            if (connection.getAppInfo() != null) {
+                connectionHolder.processName.setText(connection.getAppInfo().leaderAppName);
             } else {
                 connectionHolder.processName.setText(getString(R.string.unknow));
             }
 
-            connectionHolder.hostName.setVisibility(connection.url != null || connection.hostName != null ?
+            connectionHolder.hostName.setVisibility(connection.getUrl() != null || connection.getHostName() != null ?
                     View.VISIBLE : View.GONE);
-            connectionHolder.hostName.setText(connection.url != null ? connection.url : connection.hostName);
-            connectionHolder.netState.setText(connection.ipAndPort);
-            connectionHolder.isSSL.setVisibility(connection.isSSL ? View.VISIBLE : View.GONE);
+            connectionHolder.hostName.setText(connection.getUrl() != null ? connection.getUrl() : connection.getHostName());
+            connectionHolder.netState.setText(connection.getIpAndPort());
+            connectionHolder.isSSL.setVisibility(connection.isSSL() ? View.VISIBLE : View.GONE);
 
 
-            connectionHolder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.refreshTime));
-            int sumByte = (int) (connection.sendByteNum + connection.receiveByteNum);
+            connectionHolder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.getRefreshTime()));
+            int sumByte = (int) (connection.getSendByteNum() + connection.getReceiveByteNum());
 
             String showSum;
             if (sumByte > 1000000) {
@@ -140,7 +140,7 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(baseNetConnections.get(position).isSSL){
+                    if(baseNetConnections.get(position).isSSL()){
                         return;
                     }
                     startPacketDetailActivity(baseNetConnections.get(position));
@@ -181,7 +181,7 @@ public class ConnectionListActivity extends Activity {
 
     private void startPacketDetailActivity( BaseNetConnection connection) {
         String dir = VPNConstants.DATA_DIR
-                + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
+                + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
                 + "/"
                 + connection.getUniqueName();
         PacketDetailActivity.startActivity(this, dir);

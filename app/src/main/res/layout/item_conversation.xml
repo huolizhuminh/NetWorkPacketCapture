@@ -5,22 +5,26 @@
     android:layout_height="match_parent">
 
     <RelativeLayout
+        android:id="@+id/container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp">
+
         <TextView
             android:id="@+id/head_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:text="@string/head"
-            android:textColor="@android:color/holo_red_light"
-            />
+            android:textColor="@android:color/holo_red_light" />
+
         <TextView
             android:id="@+id/conversation_head_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:layout_below="@id/head_title"
+            android:layout_marginTop="10dp"
             tools:text="get" />
 
         <TextView
@@ -28,18 +32,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/conversation_head_text"
+            android:layout_marginTop="10dp"
             android:text="@string/body"
-            android:layout_marginBottom="10dp"
-            android:textColor="@android:color/holo_red_light"
-            />
+            android:textColor="@android:color/holo_red_light" />
 
         <TextView
             android:id="@+id/conversation_body_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/body_title"
-
-            />
+            android:layout_marginTop="10dp"
+            tools:text="xxxxxxx" />
 
         <ImageView
             android:id="@+id/conversation_body_im"
@@ -47,6 +50,8 @@
             android:layout_height="150dp"
             android:layout_below="@id/body_title"
             android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"
             tools:src="@drawable/app_icon" />
     </RelativeLayout>
 </RelativeLayout>

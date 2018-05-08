@@ -16,8 +16,6 @@ import java.nio.channels.Selector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class LocalVPNService extends VpnService {
     public static final String ACTION_START_VPN = "com.minhui.START_VPN";
@@ -47,7 +45,6 @@ public class LocalVPNService extends VpnService {
     private VPNServer vpnServer;
     private VPNClient vpnInPutRunnable;
     private String selectPackage;
-    private long vpnStartTime;
 
     @Override
     public void onCreate() {
@@ -130,7 +127,7 @@ public class LocalVPNService extends VpnService {
             executorService.submit(vpnServer);
             LocalBroadcastManager.getInstance(this).sendBroadcast(new Intent(BROADCAST_VPN_STATE));
             Log.i(TAG, "Started");
-            vpnStartTime = System.currentTimeMillis();
+            VPNConnectManager.getInstance().setLastVpnStartTime(System.currentTimeMillis());
             PortHostService.startParse(getApplicationContext());
         } catch (Exception e) {
             Log.w(TAG, "Error starting service", e);
@@ -150,7 +147,7 @@ public class LocalVPNService extends VpnService {
         Log.i(TAG, "clean up");
         isRunning = false;
         networkToDeviceQueue = null;
-        PortHostService.getInstance().refreshConnectionAppInfo();
+        PortHostService.getInstance().getAndRefreshConnInfo();
         PortHostService.stopParse(getApplicationContext());
         closeRunnable(vpnServer);
         closeRunnable(vpnInPutRunnable);
@@ -181,7 +178,4 @@ public class LocalVPNService extends VpnService {
         return vpnServer;
     }
 
-    public long getVpnStartTime() {
-        return vpnStartTime;
-    }
 }

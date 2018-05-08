@@ -160,10 +160,7 @@ public class UDPConnection extends BaseNetConnection {
 
     }
 
-    String getIpAndPort() {
 
-        return ipAndPort;
-    }
 
     Packet getToNetWorkPackets() {
         return toNetWorkPackets.poll();

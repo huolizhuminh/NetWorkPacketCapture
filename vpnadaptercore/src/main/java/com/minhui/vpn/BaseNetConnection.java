@@ -17,21 +17,85 @@ import java.util.Vector;
 public class BaseNetConnection implements Serializable {
     public static final String TCP = "TCP";
     public static final String UDP = "UPD";
-    public String type;
-    public String ipAndPort;
-    public String hostName;
-    public long sendByteNum;
-    public long receiveByteNum;
-    public long receivePacketNum;
-    public long sendPacketNum;
-    public long refreshTime = System.currentTimeMillis();
-    public AppInfo appInfo;
-    public boolean isSSL;
-    public int port;
-    public String url;
-    public long connectionStartTime = System.currentTimeMillis();
+    protected String type;
+    protected String ipAndPort;
+    protected String hostName;
+    protected long sendByteNum;
+    protected long receiveByteNum;
+    protected long receivePacketNum;
+    protected long sendPacketNum;
+    protected long refreshTime = System.currentTimeMillis();
+    protected AppInfo appInfo;
+    protected boolean isSSL;
+    protected int port;
+    protected String url;
+    protected long connectionStartTime = System.currentTimeMillis();
     protected transient Vector<ConversationData> conversation = new Vector<>();
-    public long vpnStartTime;
+    protected long vpnStartTime;
+
+    public String getType() {
+        return type;
+    }
+
+    public String getIpAndPort() {
+        return ipAndPort;
+    }
+
+    public String getHostName() {
+        return hostName;
+    }
+
+    public long getSendByteNum() {
+        return sendByteNum;
+    }
+
+    public long getReceiveByteNum() {
+        return receiveByteNum;
+    }
+
+    public long getReceivePacketNum() {
+        return receivePacketNum;
+    }
+
+    public long getSendPacketNum() {
+        return sendPacketNum;
+    }
+
+    public long getRefreshTime() {
+        return refreshTime;
+    }
+
+    public AppInfo getAppInfo() {
+        return appInfo;
+    }
+
+    public boolean isSSL() {
+        return isSSL;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public long getConnectionStartTime() {
+        return connectionStartTime;
+    }
+
+    public Vector<ConversationData> getConversation() {
+        return conversation;
+    }
+
+    public long getVpnStartTime() {
+        return vpnStartTime;
+    }
+
+    public void setAppInfo(AppInfo appInfo) {
+        this.appInfo = appInfo;
+    }
 
     public BaseNetConnection(BaseNetConnection connection) {
         type = connection.type;
