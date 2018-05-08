@@ -22,4 +22,11 @@
     <string name="email_address">邮箱:821579706@qq.com</string>
     <string name="qq_address">QQ群:692721889</string>
     <string name="github_address">Github地址:https://github.com/huolizhuminh/NetWorkPacketCapture</string>
+    <string name="body">Body:</string>
+    <string name="head">Head:</string>
+    <string name="clear_current_capture">删除本次抓包</string>
+    <string name="request_head">请求头：</string>
+    <string name="response_head">响应头：</string>
+    <string name="request_body">请求体：</string>
+    <string name="response_body">响应体：</string>
 </resources>

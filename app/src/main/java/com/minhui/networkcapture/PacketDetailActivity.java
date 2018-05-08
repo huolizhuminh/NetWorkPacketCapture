@@ -154,6 +154,7 @@ public class PacketDetailActivity extends Activity {
                 holder.bodyImage.setImageBitmap(showData.getBodyImage());
             }
             holder.bodyTitle.setVisibility((showData.isBodyNull() ? View.GONE : View.VISIBLE));
+            holder.bodyTitle.setText(getString(showData.isRequest()?R.string.request_body:R.string.response_body));
             return convertView;
         }
 
