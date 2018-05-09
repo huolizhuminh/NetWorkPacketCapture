@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -33,6 +34,7 @@ import java.util.List;
 
 public class PacketDetailActivity extends Activity {
     public static final String CONVERSATION_DATA = "conversation_data";
+    private static final String TAG = "PacketDetailActivity";
     private ListView list;
     private String dir;
     private SharedPreferences sp;
@@ -105,10 +107,10 @@ public class PacketDetailActivity extends Activity {
 
 
     class DetailAdapter extends BaseAdapter {
-        private int requestBg = getColor(R.color.colorAccent_light);
-        private int requestTextColor = getColor(R.color.colorAccent);
-        private int responseBg = getColor(R.color.colorPrimaryDark_light);
-        private int responseTextColor = getColor(R.color.colorPrimaryDark);
+        private int requestBg = getResources().getColor(R.color.colorAccent_light);
+        private int requestTextColor = getResources().getColor(R.color.colorAccent);
+        private int responseBg = getResources().getColor(R.color.colorPrimaryDark_light);
+        private int responseTextColor = getResources().getColor(R.color.colorPrimaryDark);
 
         @Override
         public int getCount() {
@@ -144,8 +146,12 @@ public class PacketDetailActivity extends Activity {
             holder.headData.setText(showData.getHeadStr());
             holder.headTitle.setText(getString(showData.isRequest() ? R.string.request_head : R.string.response_head));
             if (showData.getBodyStr() != null) {
-                String showStr=" " + showData.getBodyStr();
+                String showStr = " " + showData.getBodyStr();
+                //如果数组太长了的话在部分手机中可能会报错
+
                 holder.bodyData.setText(showStr);
+
+
             } else {
                 holder.bodyData.setText("");
 
@@ -154,7 +160,7 @@ public class PacketDetailActivity extends Activity {
                 holder.bodyImage.setImageBitmap(showData.getBodyImage());
             }
             holder.bodyTitle.setVisibility((showData.isBodyNull() ? View.GONE : View.VISIBLE));
-            holder.bodyTitle.setText(getString(showData.isRequest()?R.string.request_body:R.string.response_body));
+            holder.bodyTitle.setText(getString(showData.isRequest() ? R.string.request_body : R.string.response_body));
             return convertView;
         }
 

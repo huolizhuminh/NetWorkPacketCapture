@@ -28,4 +28,5 @@
     <string name="response_head">Response Head</string>
     <string name="request_body">Request Body:</string>
     <string name="response_body">Response Body:</string>
+    <string name="no_data">Data has been clear!!</string>
 </resources>

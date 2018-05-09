@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.minhui.vpn.ACache;
 import com.minhui.vpn.AppInfo;
@@ -58,29 +59,49 @@ public class ConnectionListActivity extends Activity {
         recyclerView.setLayoutManager(new LinearLayoutManager(ConnectionListActivity.this));
         fileDir = getIntent().getStringExtra(FILE_DIRNAME);
         handler = new Handler();
+        getDataAndRefreshView();
+
+        packageManager = getPackageManager();
+
+    }
+
+    private void getDataAndRefreshView() {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
                 baseNetConnections = new ArrayList<>();
-                File file = new File(fileDir );
+                File file = new File(fileDir);
                 ACache aCache = ACache.get(file);
                 String[] list = file.list();
+                if (list == null || list.length == 0) {
+                    refreshView();
+                    return;
+                }
                 for (String fileName : list) {
                     BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
                     baseNetConnections.add(netConnection);
                 }
                 Collections.sort(baseNetConnections, new BaseNetConnection.NetConnectionComparator());
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        connectionAdapter = new ConnectionAdapter();
-                        recyclerView.setAdapter(connectionAdapter);
-                    }
-                });
+
+                refreshView();
 
             }
         });
-        packageManager = getPackageManager();
+
+    }
+
+    private void refreshView() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (baseNetConnections == null || baseNetConnections.size() == 0) {
+                    Toast.makeText(ConnectionListActivity.this, getString(R.string.no_data), Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                connectionAdapter = new ConnectionAdapter();
+                recyclerView.setAdapter(connectionAdapter);
+            }
+        });
 
     }
 
@@ -107,7 +128,7 @@ public class ConnectionListActivity extends Activity {
             if (connection.getAppInfo() != null) {
                 icon = AppInfo.getIcon(getApplication(), connection.getAppInfo().pkgs.getAt(0));
             } else {
-                icon =getResources(). getDrawable(R.drawable.sym_def_app_icon);
+                icon = getResources().getDrawable(R.drawable.sym_def_app_icon);
             }
 
             connectionHolder.icon.setImageDrawable(icon);
@@ -140,7 +161,7 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(baseNetConnections.get(position).isSSL()){
+                    if (baseNetConnections.get(position).isSSL()) {
                         return;
                     }
                     startPacketDetailActivity(baseNetConnections.get(position));
@@ -154,7 +175,7 @@ public class ConnectionListActivity extends Activity {
 
         @Override
         public int getItemCount() {
-            return baseNetConnections.size();
+            return baseNetConnections == null ? 0 : baseNetConnections.size();
         }
 
         class ConnectionHolder extends RecyclerView.ViewHolder {
@@ -179,7 +200,7 @@ public class ConnectionListActivity extends Activity {
         }
     }
 
-    private void startPacketDetailActivity( BaseNetConnection connection) {
+    private void startPacketDetailActivity(BaseNetConnection connection) {
         String dir = VPNConstants.DATA_DIR
                 + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
                 + "/"

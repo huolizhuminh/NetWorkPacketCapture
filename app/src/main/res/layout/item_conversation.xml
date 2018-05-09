@@ -36,7 +36,7 @@
             android:text="@string/body"
             android:textColor="@android:color/holo_red_light" />
 
-        <TextView
+        <com.minhui.networkcapture.SmartTextView
             android:id="@+id/conversation_body_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

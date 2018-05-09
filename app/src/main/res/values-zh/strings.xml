@@ -29,4 +29,5 @@
     <string name="response_head">响应头：</string>
     <string name="request_body">请求体：</string>
     <string name="response_body">响应体：</string>
+    <string name="no_data">数据已经被清空了!!</string>
 </resources>

@@ -136,7 +136,7 @@ public class CaptureFragment extends BaseFragment {
                     return;
                 }
                 Iterator<BaseNetConnection> iterator = allNetConnection.iterator();
-                String packageName = getContext().getPackageName();
+                String packageName = context.getPackageName();
                 while (iterator.hasNext()) {
                     BaseNetConnection next = iterator.next();
                     if (BaseNetConnection.UDP.equals(next.getType())) {
@@ -149,6 +149,9 @@ public class CaptureFragment extends BaseFragment {
                             && packageName.equals(appInfo.pkgs.getAt(0))) {
                         iterator.remove();
                     }
+                }
+                if (handler == null) {
+                    return;
                 }
                 handler.post(new Runnable() {
                     @Override
