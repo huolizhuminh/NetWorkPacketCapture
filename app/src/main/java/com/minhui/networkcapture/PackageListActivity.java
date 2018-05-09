@@ -88,7 +88,7 @@ public class PackageListActivity extends Activity {
         Drawable defaultDrawable;
 
         ShowPackageAdapter() {
-            defaultDrawable = getDrawable(R.drawable.sym_def_app_icon);
+            defaultDrawable = getResources().getDrawable(R.drawable.sym_def_app_icon);
         }
 
         @Override

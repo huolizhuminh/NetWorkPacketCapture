@@ -67,7 +67,7 @@ public class ConnectionAdapter extends BaseAdapter {
             }
         }else {
             holder.processName.setText(context.getString(R.string.unknow));
-            holder.icon.setImageDrawable(context.getDrawable(R.drawable.sym_def_app_icon));
+            holder.icon.setImageDrawable(context.getResources().getDrawable(R.drawable.sym_def_app_icon));
         }
         holder.isSSL.setVisibility(View.GONE);
         holder.hostName.setText(null);
