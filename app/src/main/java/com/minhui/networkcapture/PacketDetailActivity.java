@@ -64,8 +64,10 @@ public class PacketDetailActivity extends Activity {
                         @Override
                         public void run() {
                             finish();
+
                         }
                     });
+                    return;
                 }
                 List<File> filesList = new ArrayList<>();
                 for (File childFile : files) {
