@@ -264,13 +264,18 @@ public class FirewallVpnService extends VpnService implements Runnable {
         Method method = SystemProperties.getMethod("get", new Class[]{String.class});
         ArrayList<String> servers = new ArrayList<>();
         for (String name : new String[]{"net.dns1", "net.dns2", "net.dns3", "net.dns4",}) {
-            String value = (String) method.invoke(null, name);
-            if (value != null && !"".equals(value) && !servers.contains(value)) {
-                servers.add(value);
-                builder.addRoute(value, 32); //添加路由，使得DNS查询流量也走该VPN接口
+            try {
+                String value = (String) method.invoke(null, name);
+                if (value != null && !"".equals(value) && !servers.contains(value)) {
+                    servers.add(value);
+                    builder.addRoute(value, 32); //添加路由，使得DNS查询流量也走该VPN接口
 
-                DebugLog.i("%s=%s\n", name, value);
+                    DebugLog.i("%s=%s\n", name, value);
+                }
+            }catch (Exception e){
+
             }
+
         }
         builder.setSession(ProxyConfig.Instance.getSessionName());
         ParcelFileDescriptor pfdDescriptor = builder.establish();
