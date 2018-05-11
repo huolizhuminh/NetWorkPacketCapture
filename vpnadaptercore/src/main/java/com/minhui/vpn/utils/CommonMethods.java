@@ -1,6 +1,8 @@
 package com.minhui.vpn.utils;
 
 
+import android.util.Log;
+
 import com.minhui.vpn.tcpip.IPHeader;
 import com.minhui.vpn.tcpip.TCPHeader;
 import com.minhui.vpn.tcpip.UDPHeader;
@@ -13,6 +15,8 @@ import java.net.UnknownHostException;
  * @author zengzheying
  */
 public class CommonMethods {
+
+	private static final String TAG = "CommonMethods";
 
 	public static InetAddress ipIntToInet4Address(int ip) {
 		byte[] ipAddress = new byte[4];
@@ -77,6 +81,7 @@ public class CommonMethods {
 	}
 
 	public static long getsum(byte[] buf, int offset, int len) {
+	//	Log.d(TAG,"getsum offset  "+offset+"  len"+len+"  length"+buf.length);
 		long sum = 0;
 		while (len > 1) {
 			sum += readShort(buf, offset) & 0xFFFF;

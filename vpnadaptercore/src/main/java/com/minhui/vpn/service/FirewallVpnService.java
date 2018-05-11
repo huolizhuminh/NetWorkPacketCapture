@@ -82,7 +82,6 @@ public class FirewallVpnService extends VpnService implements Runnable {
     private long mReceivedBytes;
     private ConcurrentLinkedQueue<Packet> udpQueue;
     private FileInputStream in;
-    private Selector mSelector;
     private UDPServer udpServer;
     private String selectPackage;
     public static final int MUTE_SIZE = 2560;
@@ -146,7 +145,6 @@ public class FirewallVpnService extends VpnService implements Runnable {
     }
 
     //建立VPN，同时监听出口流量
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void runVPN() throws Exception {
 
         this.mVPNInterface = establishVPN();
@@ -290,10 +288,30 @@ public class FirewallVpnService extends VpnService implements Runnable {
         }
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private ParcelFileDescriptor establishVPN() throws Exception {
-   /*     Builder builder = new Builder();
-        builder.setMtu(ProxyConfig.Instance.getMTU());
+    /*    //  notifyStatus(new VPNEvent(VPNEvent.Status.ESTABLISHED));
+        Builder builder = new Builder();
+        builder.addAddress(VPN_ADDRESS, 32);
+        builder.addRoute(VPN_ROUTE, 0);
+        //某些国外的手机例如google pixel 默认的dns解析器地址不是8.8.8.8 ，不设置会出错
+        builder.addDnsServer(GOOGLE_DNS_FIRST);
+        builder.addDnsServer(CHINA_DNS_FIRST);
+        builder.addDnsServer(GOOGLE_DNS_SECOND);
+        builder.addDnsServer(AMERICA);
+        builder.setMtu(2560);
+        try {
+            if (selectPackage != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    builder.addAllowedApplication(selectPackage);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+      *//*   addAllowedApp(builder, YOUTUBE_APP);*//*
+        return builder.setSession(VPNConnectManager.getInstance().getAppName()).establish();*/
+        Builder builder = new Builder();
+        builder.setMtu(MUTE_SIZE);
 
         DebugLog.i("setMtu: %d\n", ProxyConfig.Instance.getMTU());
 
@@ -324,35 +342,23 @@ public class FirewallVpnService extends VpnService implements Runnable {
         Method method = SystemProperties.getMethod("get", new Class[]{String.class});
         ArrayList<String> servers = new ArrayList<>();
         for (String name : new String[]{"net.dns1", "net.dns2", "net.dns3", "net.dns4",}) {
-            String value = (String) method.invoke(null, name);
-            if (value != null && !"".equals(value) && !servers.contains(value)) {
-                servers.add(value);
-                builder.addRoute(value, 32); //添加路由，使得DNS查询流量也走该VPN接口
+            try {
+                String value = (String) method.invoke(null, name);
+                if (value != null && !"".equals(value) && !servers.contains(value)) {
+                    servers.add(value);
+                    builder.addRoute(value, 32); //添加路由，使得DNS查询流量也走该VPN接口
 
-                DebugLog.i("%s=%s\n", name, value);
+                    DebugLog.i("%s=%s\n", name, value);
+                }
+            }catch (Exception e){
+
             }
+
         }
         builder.setSession(ProxyConfig.Instance.getSessionName());
-        ParcelFileDescriptor pfdDescriptor = builder.establish();*/
+        ParcelFileDescriptor pfdDescriptor = builder.establish();
         //  notifyStatus(new VPNEvent(VPNEvent.Status.ESTABLISHED));
-        Builder builder = new Builder();
-        builder.addAddress(VPN_ADDRESS, 32);
-        builder.addRoute(VPN_ROUTE, 0);
-        //某些国外的手机例如google pixel 默认的dns解析器地址不是8.8.8.8 ，不设置会出错
-        builder.addDnsServer(GOOGLE_DNS_FIRST);
-        builder.addDnsServer(CHINA_DNS_FIRST);
-        builder.addDnsServer(GOOGLE_DNS_SECOND);
-        builder.addDnsServer(AMERICA);
-        builder.setMtu(2560);
-        try {
-            if (selectPackage != null) {
-                builder.addAllowedApplication(selectPackage);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-      /*   addAllowedApp(builder, YOUTUBE_APP);*/
-        return builder.setSession(VPNConnectManager.getInstance().getAppName()).establish();
+        return pfdDescriptor;
     }
 
     @Override
@@ -366,12 +372,12 @@ public class FirewallVpnService extends VpnService implements Runnable {
             ProxyConfig.Instance.setBlockingInfoBuilder(new HtmlBlockingInfoBuilder());
             ProxyConfig.Instance.prepare();
             udpQueue = new ConcurrentLinkedQueue<>();
-            mSelector = Selector.open();
-            //启动TCP代理服务
-            mTcpProxyServer = new TcpProxyServer(0, mSelector);
-            mTcpProxyServer.start();
-            udpServer = new UDPServer(this, udpQueue, mSelector);
 
+            //启动TCP代理服务
+            mTcpProxyServer = new TcpProxyServer(0);
+            mTcpProxyServer.start();
+            udpServer = new UDPServer(this, udpQueue);
+            udpServer.start();
          /*   mDnsProxy = new DnsProxy();
             mDnsProxy.start();*/
             DebugLog.i("DnsProxy started.\n");

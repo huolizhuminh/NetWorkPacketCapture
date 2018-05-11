@@ -22,7 +22,7 @@ import java.util.Iterator;
 /**
  * Created by zengzheying on 15/12/30.
  */
-public class TcpProxyServer implements Runnable ,KeyHandler{
+public class TcpProxyServer implements Runnable {
    private static final String TAG="TcpProxyServer";
 	public boolean Stopped;
 	public short Port;
@@ -31,13 +31,13 @@ public class TcpProxyServer implements Runnable ,KeyHandler{
 	ServerSocketChannel mServerSocketChannel;
 	Thread mServerThread;
 
-	public TcpProxyServer(int port,Selector mSelector) throws IOException {
-		this.mSelector=mSelector;
+	public TcpProxyServer(int port) throws IOException {
+		mSelector = Selector.open();
 
 		mServerSocketChannel = ServerSocketChannel.open();
 		mServerSocketChannel.configureBlocking(false);
 		mServerSocketChannel.socket().bind(new InetSocketAddress(port));
-		mServerSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT,this);
+		mServerSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT);
 		this.Port = (short) mServerSocketChannel.socket().getLocalPort();
 
 		DebugLog.i("AsyncTcpServer listen on %s:%d success.\n", mServerSocketChannel.socket().getInetAddress()
@@ -101,17 +101,13 @@ public class TcpProxyServer implements Runnable ,KeyHandler{
 									((KeyHandler)attachment).onKeyReady(key);
 								}
 							}
-							Object attachment = key.attachment();
-							if(attachment instanceof KeyHandler){
-								((KeyHandler)attachment).onKeyReady(key);
-							}
 
 						} catch (Exception ex) {
 							if (AppDebug.IS_DEBUG) {
 								ex.printStackTrace(System.err);
 							}
 
-							DebugLog.e("TcpProxyServer iterate SelectionKey catch an exception: %s", ex);
+							DebugLog.e("udp iterate SelectionKey catch an exception: %s", ex);
 						}
 					}
 					keyIterator.remove();
@@ -125,10 +121,10 @@ public class TcpProxyServer implements Runnable ,KeyHandler{
 				e.printStackTrace(System.err);
 			}
 
-			DebugLog.e("TcpProxyServer catch an exception: %s", e);
+			DebugLog.e("updServer catch an exception: %s", e);
 		} finally {
 			this.stop();
-			DebugLog.i("TcpServer thread exited.");
+			DebugLog.i("udpServer thread exited.");
 		}
 	}
 
@@ -182,12 +178,12 @@ public class TcpProxyServer implements Runnable ,KeyHandler{
 			}
 		}
 	}
-
+/*
 	@Override
 	public void onKeyReady(SelectionKey key) {
 		VPNLog.d(TAG,"onKeyReady");
 		if(key.isAcceptable()){
 			onAccepted(key);
 		}
-	}
+	}*/
 }

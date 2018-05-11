@@ -4,9 +4,12 @@ import android.net.VpnService;
 import android.util.Log;
 
 import com.minhui.vpn.tunnel.UDPTunnel;
+import com.minhui.vpn.utils.AppDebug;
+import com.minhui.vpn.utils.DebugLog;
 import com.minhui.vpn.utils.MyLRUCache;
 import com.minhui.vpn.utils.SocketUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -23,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-public class UDPServer  {
+public class UDPServer implements Runnable {
     private String TAG = UDPServer.class.getSimpleName();
     private VpnService vpnService;
     private ConcurrentLinkedQueue<Packet> outputQueue;
@@ -43,7 +46,17 @@ public class UDPServer  {
             });
 
 
-    public UDPServer(VpnService vpnService, ConcurrentLinkedQueue<Packet> outputQueue, Selector selector) {
+    public void start() {
+        Thread thread = new Thread(this, "UDPServer");
+        thread.start();
+    }
+
+    public UDPServer(VpnService vpnService, ConcurrentLinkedQueue<Packet> outputQueue) {
+        try {
+            selector = Selector.open();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         this.vpnService = vpnService;
         this.outputQueue = outputQueue;
         this.selector = selector;
@@ -66,10 +79,7 @@ public class UDPServer  {
     }
 
 
-
-
-
-   public void closeAllUDPConn() {
+    public void closeAllUDPConn() {
         synchronized (udpConnections) {
             Iterator<Map.Entry<String, UDPTunnel>> it = udpConnections.entrySet().iterator();
             while (it.hasNext()) {
@@ -80,14 +90,14 @@ public class UDPServer  {
     }
 
 
-   public void closeUDPConn(UDPTunnel connection) {
+    public void closeUDPConn(UDPTunnel connection) {
         synchronized (udpConnections) {
             connection.close();
             udpConnections.remove(connection.getIpAndPort());
         }
     }
 
-    public  UDPTunnel getUDPConn(String ipAndPort) {
+    public UDPTunnel getUDPConn(String ipAndPort) {
         synchronized (udpConnections) {
             return udpConnections.get(ipAndPort);
         }
@@ -98,6 +108,58 @@ public class UDPServer  {
             udpConnections.put(ipAndPort, connection);
         }
 
+    }
+
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                int select = selector.select();
+                if (select == 0) {
+                    Thread.sleep(5);
+                }
+                Iterator<SelectionKey> keyIterator = selector.selectedKeys().iterator();
+                while (keyIterator.hasNext()) {
+                    SelectionKey key = keyIterator.next();
+                    if (key.isValid()) {
+                        try {
+                            Object attachment = key.attachment();
+                            if (attachment instanceof KeyHandler) {
+                                ((KeyHandler) attachment).onKeyReady(key);
+                            }
+
+                        } catch (Exception ex) {
+                            if (AppDebug.IS_DEBUG) {
+                                ex.printStackTrace(System.err);
+                            }
+
+                            DebugLog.e("TcpProxyServer iterate SelectionKey catch an exception: %s", ex);
+                        }
+                    }
+                    keyIterator.remove();
+                }
+
+
+            }
+        } catch (Exception e) {
+            if (AppDebug.IS_DEBUG) {
+                e.printStackTrace(System.err);
+            }
+
+            DebugLog.e("TcpProxyServer catch an exception: %s", e);
+        } finally {
+            this.stop();
+            DebugLog.i("TcpServer thread exited.");
+        }
+    }
+
+    private void stop() {
+        try {
+            selector.close();
+            selector = null;
+        } catch (Exception e) {
+
+        }
     }
 
 }
