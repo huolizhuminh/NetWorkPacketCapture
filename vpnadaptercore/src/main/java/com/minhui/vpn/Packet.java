@@ -19,24 +19,24 @@ import java.util.Locale;
  * Representation of an IP Packet
  */
 
-class Packet implements Serializable {
-    static final int IP4_HEADER_SIZE = 20;
-    static final int TCP_HEADER_SIZE = 20;
-    static final int UDP_HEADER_SIZE = 8;
+public class Packet implements Serializable {
+    public static final int IP4_HEADER_SIZE = 20;
+    public static final int TCP_HEADER_SIZE = 20;
+    public static final int UDP_HEADER_SIZE = 8;
     private static final int FIRST_TCP_DATA = 40;
     private static final String TAG = "Packet";
 
 
-    IP4Header ip4Header;
-    TCPHeader tcpHeader;
-    UDPHeader udpHeader;
-    ByteBuffer backingBuffer;
+    public IP4Header ip4Header;
+    public TCPHeader tcpHeader;
+    public UDPHeader udpHeader;
+    public ByteBuffer backingBuffer;
 
     private boolean isTCP;
     private boolean isUDP;
     boolean releaseAfterWritingToDevice = true;
     boolean cancelSending = false;
-    int playLoadSize = 0;
+    public int playLoadSize = 0;
     private boolean isSSL;
     private String hostName;
     private String method;
@@ -86,7 +86,7 @@ class Packet implements Serializable {
         return playLoadSize;
     }
 
-    Packet(ByteBuffer buffer) throws UnknownHostException {
+    public Packet(ByteBuffer buffer) throws UnknownHostException {
         this.ip4Header = new IP4Header(buffer);
         if (this.ip4Header.protocol == IP4Header.TransportProtocol.TCP) {
             this.tcpHeader = new TCPHeader(buffer);
@@ -103,7 +103,7 @@ class Packet implements Serializable {
 
     }
 
-    Packet duplicated() {
+    public Packet duplicated() {
         Packet packet = new Packet();
         packet.ip4Header = ip4Header.duplicate();
         if (tcpHeader != null) {
@@ -131,7 +131,7 @@ class Packet implements Serializable {
         return sb.toString();
     }
 
-    boolean isTCP() {
+    public boolean isTCP() {
         return isTCP;
     }
 
@@ -139,7 +139,7 @@ class Packet implements Serializable {
         return isUDP;
     }
 
-    void swapSourceAndDestination() {
+    public void swapSourceAndDestination() {
         InetAddress newSourceAddress = ip4Header.destinationAddress;
         ip4Header.destinationAddress = ip4Header.sourceAddress;
         ip4Header.sourceAddress = newSourceAddress;
@@ -183,7 +183,7 @@ class Packet implements Serializable {
         this.playLoadSize = payloadSize;
     }
 
-    void updateUDPBuffer(ByteBuffer buffer, int payloadSize) {
+    public void updateUDPBuffer(ByteBuffer buffer, int payloadSize) {
         buffer.position(0);
         fillHeader(buffer);
         backingBuffer = buffer;
@@ -498,7 +498,7 @@ class Packet implements Serializable {
      * unsigned int m_uiSourIp;     　　　　　//源ip         4个
      * unsigned int m_uiDestIp;     　　　　　//目的ip        4个
      */
-    static class IP4Header implements Serializable {
+    public static class IP4Header implements Serializable {
 
         public byte version;
         byte IHL;
@@ -513,8 +513,8 @@ class Packet implements Serializable {
         TransportProtocol protocol;
         int headerChecksum;
 
-        InetAddress sourceAddress;
-        InetAddress destinationAddress;
+        public InetAddress sourceAddress;
+        public InetAddress destinationAddress;
 
         int optionsAndPadding;
 
@@ -640,45 +640,45 @@ class Packet implements Serializable {
      * short m_sCheckSum;        　　　　　 // 检验和16bit
      * short m_surgentPointer;      　　　　 // 紧急数据偏移量16bit
      */
-    static class TCPHeader implements Serializable {
+    public static class TCPHeader implements Serializable {
         /**
          * 会话结束
          */
 
-        static final int FIN = 0x01;
+        public static final int FIN = 0x01;
         /**
          * 开始会话请求
          */
 
-        static final int SYN = 0x02;
+        public static final int SYN = 0x02;
         /**
          * 复位 中断一个链接
          */
 
-        static final int RST = 0x04;
+        public static final int RST = 0x04;
         /**
          * 数据包立即推送
          */
-        static final int PSH = 0x08;
+        public static final int PSH = 0x08;
         /**
          * 应答
          */
-        static final int ACK = 0x10;
+        public static final int ACK = 0x10;
         /**
          * 紧急
          */
-        static final int URG = 0x20;
+        public static final int URG = 0x20;
 
-        int sourcePort;
-        int destinationPort;
+        public int sourcePort;
+        public int destinationPort;
 
-        long sequenceNumber;
-        long acknowledgementNumber;
+        public long sequenceNumber;
+        public long acknowledgementNumber;
 
-        byte dataOffsetAndReserved;
-        int headerLength;
-        byte flags;
-        int window;
+        public byte dataOffsetAndReserved;
+        public int headerLength;
+        public byte flags;
+        public int window;
 
         int checksum;
         int urgentPointer;
@@ -805,12 +805,12 @@ class Packet implements Serializable {
         }
     }
 
-    static class UDPHeader implements Serializable {
-        int sourcePort;
-        int destinationPort;
+    public static class UDPHeader implements Serializable {
+        public int sourcePort;
+        public int destinationPort;
 
-        int length;
-        int checksum;
+        public int length;
+        public int checksum;
 
         UDPHeader(ByteBuffer buffer) {
             this.sourcePort = BitUtils.getUnsignedShort(buffer.getShort());

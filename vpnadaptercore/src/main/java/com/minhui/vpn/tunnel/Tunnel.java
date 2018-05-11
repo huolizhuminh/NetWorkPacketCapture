@@ -1,6 +1,7 @@
 package com.minhui.vpn.tunnel;
 
 
+import com.minhui.vpn.KeyHandler;
 import com.minhui.vpn.http.HttpResponse;
 import com.minhui.vpn.utils.AppDebug;
 import com.minhui.vpn.utils.DebugLog;
@@ -16,7 +17,7 @@ import java.nio.channels.SocketChannel;
 /**
  * Created by zengzheying on 15/12/29.
  */
-public abstract class Tunnel {
+public abstract class Tunnel implements KeyHandler{
 
 	final static ByteBuffer GL_BUFFER = ByteBuffer.allocate(20000);
 	public static long SessionCount;
@@ -48,6 +49,17 @@ public abstract class Tunnel {
 		this.mSelector = selector;
 		this.mServerEP = serverAddress;
 		SessionCount++;
+	}
+
+	@Override
+	public void onKeyReady(SelectionKey key) {
+		if (key.isReadable()) {
+			onReadable(key);
+		} else if (key.isWritable()) {
+			onWritable(key);
+		} else if (key.isConnectable()) {
+			onConnectable();
+		}
 	}
 
 	/**

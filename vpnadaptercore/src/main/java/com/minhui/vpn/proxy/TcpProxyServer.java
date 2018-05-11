@@ -1,6 +1,8 @@
 package com.minhui.vpn.proxy;
 
 
+import com.minhui.vpn.KeyHandler;
+import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
 import com.minhui.vpn.tunnel.Tunnel;
@@ -20,8 +22,8 @@ import java.util.Iterator;
 /**
  * Created by zengzheying on 15/12/30.
  */
-public class TcpProxyServer implements Runnable {
-
+public class TcpProxyServer implements Runnable ,KeyHandler{
+   private static final String TAG="TcpProxyServer";
 	public boolean Stopped;
 	public short Port;
 
@@ -29,12 +31,13 @@ public class TcpProxyServer implements Runnable {
 	ServerSocketChannel mServerSocketChannel;
 	Thread mServerThread;
 
-	public TcpProxyServer(int port) throws IOException {
-		mSelector = Selector.open();
+	public TcpProxyServer(int port,Selector mSelector) throws IOException {
+		this.mSelector=mSelector;
+
 		mServerSocketChannel = ServerSocketChannel.open();
 		mServerSocketChannel.configureBlocking(false);
 		mServerSocketChannel.socket().bind(new InetSocketAddress(port));
-		mServerSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT);
+		mServerSocketChannel.register(mSelector, SelectionKey.OP_ACCEPT,this);
 		this.Port = (short) mServerSocketChannel.socket().getLocalPort();
 
 		DebugLog.i("AsyncTcpServer listen on %s:%d success.\n", mServerSocketChannel.socket().getInetAddress()
@@ -80,21 +83,29 @@ public class TcpProxyServer implements Runnable {
 	public void run() {
 		try {
 			while (true) {
-				mSelector.select();
+				int select = mSelector.select();
+				if(select==0){
+					Thread.sleep(5);
+				}
 				Iterator<SelectionKey> keyIterator = mSelector.selectedKeys().iterator();
 				while (keyIterator.hasNext()) {
 					SelectionKey key = keyIterator.next();
 					if (key.isValid()) {
 						try {
-							if (key.isReadable()) {
-								((Tunnel) key.attachment()).onReadable(key);
-							} else if (key.isWritable()) {
-								((Tunnel) key.attachment()).onWritable(key);
-							} else if (key.isConnectable()) {
-								((Tunnel) key.attachment()).onConnectable();
-							} else if (key.isAcceptable()) {
+							if(key.isAcceptable()){
+								VPNLog.d(TAG,"isAcceptable");
 								onAccepted(key);
+							}else {
+								Object attachment = key.attachment();
+								if(attachment instanceof KeyHandler){
+									((KeyHandler)attachment).onKeyReady(key);
+								}
 							}
+							Object attachment = key.attachment();
+							if(attachment instanceof KeyHandler){
+								((KeyHandler)attachment).onKeyReady(key);
+							}
+
 						} catch (Exception ex) {
 							if (AppDebug.IS_DEBUG) {
 								ex.printStackTrace(System.err);
@@ -105,6 +116,8 @@ public class TcpProxyServer implements Runnable {
 					}
 					keyIterator.remove();
 				}
+
+
 
 			}
 		} catch (Exception e) {
@@ -167,6 +180,14 @@ public class TcpProxyServer implements Runnable {
 			if (localTunnel != null) {
 				localTunnel.dispose();
 			}
+		}
+	}
+
+	@Override
+	public void onKeyReady(SelectionKey key) {
+		VPNLog.d(TAG,"onKeyReady");
+		if(key.isAcceptable()){
+			onAccepted(key);
 		}
 	}
 }

@@ -114,12 +114,12 @@ public class VPNConnectManager {
         return totalSendPacket;
     }
 
-    void addSendNum(Packet packet, int sendNum) {
+    public void addSendNum(Packet packet, int sendNum) {
         totalSendByteNum = totalSendByteNum + sendNum;
         totalSendPacket++;
     }
 
-    void addReceiveNum(Packet packet, int receiveNum) {
+    public void addReceiveNum(Packet packet, int receiveNum) {
         totalReceiveByteNum = totalReceiveByteNum + receiveNum;
         totalReceivePacket++;
 

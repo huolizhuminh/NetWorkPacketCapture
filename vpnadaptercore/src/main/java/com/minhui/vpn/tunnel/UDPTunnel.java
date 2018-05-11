@@ -1,7 +1,14 @@
-package com.minhui.vpn;
+package com.minhui.vpn.tunnel;
 
 import android.net.VpnService;
 
+import com.minhui.vpn.BaseNetSession;
+import com.minhui.vpn.KeyHandler;
+import com.minhui.vpn.Packet;
+import com.minhui.vpn.UDPServer;
+import com.minhui.vpn.VPNConnectManager;
+import com.minhui.vpn.VPNLog;
+import com.minhui.vpn.VPNServer;
 import com.minhui.vpn.utils.SocketUtils;
 
 import java.io.IOException;
@@ -19,14 +26,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-public class UDPConnection extends BaseNetSession {
+public class UDPTunnel extends BaseNetSession implements KeyHandler{
 
 
-    private static final String TAG = UDPConnection.class.getSimpleName();
+    private static final String TAG = UDPTunnel.class.getSimpleName();
     private final VpnService vpnService;
     private final Selector selector;
-    private final VPNServer vpnServer;
-    private final VPNServer.KeyHandler keyHandler;
+    private final UDPServer vpnServer;
     private final Queue<Packet> outputQueue;
     private Packet referencePacket;
     private SelectionKey selectionKey;
@@ -36,22 +42,17 @@ public class UDPConnection extends BaseNetSession {
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
 
 
-    public UDPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
+    public UDPTunnel(VpnService vpnService, Selector selector, UDPServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
         this.vpnService = vpnService;
         this.selector = selector;
         this.vpnServer = vpnServer;
         this.referencePacket = packet;
         ipAndPort = packet.getIpAndPort();
         this.outputQueue = outputQueue;
-        this.keyHandler = new VPNServer.KeyHandler() {
-            @Override
-            public void onKeyReady(SelectionKey key) {
-                processKey(key);
-            }
-        };
         port = packet.udpHeader.sourcePort;
         type = UDP;
     }
+
 
 
     private void processKey(SelectionKey key) {
@@ -109,8 +110,10 @@ public class UDPConnection extends BaseNetSession {
             sendPacketNum++;
             sendByteNum = sendByteNum + payloadBuffer.limit() - payloadBuffer.position();
             refreshTime = System.currentTimeMillis();
-            while (payloadBuffer.hasRemaining())
+            while (payloadBuffer.hasRemaining()){
                 channel.write(payloadBuffer);
+            }
+
 
         } catch (IOException e) {
             VPNLog.w(TAG, "Network write error: " + ipAndPort, e);
@@ -118,7 +121,7 @@ public class UDPConnection extends BaseNetSession {
         }
     }
 
-    void initConnection() {
+    public void initConnection() {
         VPNLog.d(TAG, "init  ipAndPort:" + ipAndPort);
         InetAddress destinationAddress = referencePacket.ip4Header.destinationAddress;
         int destinationPort = referencePacket.udpHeader.destinationPort;
@@ -128,9 +131,12 @@ public class UDPConnection extends BaseNetSession {
             VPNLog.i(TAG, "ipAndPort is " + ipAndPort);
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(destinationAddress, destinationPort));
+            VPNLog.i(TAG,"end connect");
             selector.wakeup();
+            VPNLog.i(TAG,"end wakeup");
             selectionKey = channel.register(selector,
-                    SelectionKey.OP_READ, ipAndPort);
+                    SelectionKey.OP_READ, this);
+            VPNLog.d(TAG,"end reigster");
         } catch (IOException e) {
             SocketUtils.closeResources(channel);
             VPNLog.w(TAG, "Connection error: " + ipAndPort, e);
@@ -140,12 +146,12 @@ public class UDPConnection extends BaseNetSession {
         addToNetWorkPacket(referencePacket);
     }
 
-    void processPacket(Packet packet) {
+    public void processPacket(Packet packet) {
         addToNetWorkPacket(packet);
         updateInterests();
     }
 
-    void close() {
+    public  void close() {
         try {
             selectionKey.cancel();
             channel.close();
@@ -187,7 +193,9 @@ public class UDPConnection extends BaseNetSession {
     }
 
 
-    VPNServer.KeyHandler getKeyHandler() {
-        return keyHandler;
+
+    @Override
+    public void onKeyReady(SelectionKey key) {
+        processKey(key);
     }
 }
