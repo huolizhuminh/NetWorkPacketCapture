@@ -3,11 +3,9 @@ package com.minhui.networkcapture;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -16,9 +14,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.minhui.vpn.ConversationData;
-import com.minhui.vpn.SaveDataFileParser;
-import com.minhui.vpn.ThreadProxy;
+import com.minhui.vpn.utils.SaveDataFileParser;
+import com.minhui.vpn.utils.ThreadProxy;
 
 import java.io.File;
 import java.util.ArrayList;

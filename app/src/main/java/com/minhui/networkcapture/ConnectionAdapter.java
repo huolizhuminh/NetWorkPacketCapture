@@ -7,9 +7,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.minhui.vpn.AppInfo;
-import com.minhui.vpn.BaseNetConnection;
-import com.minhui.vpn.TimeFormatUtil;
+import com.minhui.vpn.processparse.AppInfo;
+import com.minhui.vpn.BaseNetSession;
+import com.minhui.vpn.utils.TimeFormatUtil;
 
 import java.util.List;
 
@@ -21,14 +21,14 @@ import java.util.List;
 
 public class ConnectionAdapter extends BaseAdapter {
     private final Context context;
-    private List<BaseNetConnection> netConnections;
+    private List<BaseNetSession> netConnections;
 
-    ConnectionAdapter(Context context, List<BaseNetConnection> netConnections) {
+    ConnectionAdapter(Context context, List<BaseNetSession> netConnections) {
         this.context = context;
         this.netConnections = netConnections;
     }
 
-    public void setNetConnections(List<BaseNetConnection> netConnections) {
+    public void setNetConnections(List<BaseNetSession> netConnections) {
         this.netConnections = netConnections;
     }
 
@@ -58,7 +58,7 @@ public class ConnectionAdapter extends BaseAdapter {
         } else {
             holder = (Holder) convertView.getTag();
         }
-        BaseNetConnection connection = netConnections.get(position);
+        BaseNetSession connection = netConnections.get(position);
         if (connection.getAppInfo() != null) {
 
             holder.processName.setText(connection.getAppInfo().leaderAppName);
@@ -72,7 +72,7 @@ public class ConnectionAdapter extends BaseAdapter {
         holder.isSSL.setVisibility(View.GONE);
         holder.hostName.setText(null);
         holder.hostName.setVisibility(View.GONE);
-        if (BaseNetConnection.TCP.equals(connection.getType())) {
+        if (BaseNetSession.TCP.equals(connection.getType())) {
             if (connection.isSSL()) {
                 holder.isSSL.setVisibility(View.VISIBLE);
             }

@@ -12,6 +12,9 @@ import android.os.ParcelFileDescriptor;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.minhui.vpn.processparse.PortHostService;
+import com.minhui.vpn.utils.SocketUtils;
+
 import java.nio.channels.Selector;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;

@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.minhui.vpn.ThreadProxy;
+import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.VPNConstants;
 
 import java.io.File;

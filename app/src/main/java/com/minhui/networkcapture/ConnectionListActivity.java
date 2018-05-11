@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PersistableBundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,18 +15,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.minhui.vpn.ACache;
-import com.minhui.vpn.AppInfo;
-import com.minhui.vpn.BaseNetConnection;
-import com.minhui.vpn.ConversationData;
-import com.minhui.vpn.ThreadProxy;
-import com.minhui.vpn.TimeFormatUtil;
+import com.minhui.vpn.utils.ACache;
+import com.minhui.vpn.processparse.AppInfo;
+import com.minhui.vpn.BaseNetSession;
+import com.minhui.vpn.utils.ThreadProxy;
+import com.minhui.vpn.utils.TimeFormatUtil;
 import com.minhui.vpn.VPNConstants;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Vector;
 
 /**
  * @author minhui.zhu
@@ -40,7 +37,7 @@ public class ConnectionListActivity extends Activity {
     private RecyclerView recyclerView;
     public static final String FILE_DIRNAME = "file_dirname";
     private String fileDir;
-    private ArrayList<BaseNetConnection> baseNetConnections;
+    private ArrayList<BaseNetSession> baseNetSessions;
     private Handler handler;
     private ConnectionAdapter connectionAdapter;
     private PackageManager packageManager;
@@ -69,7 +66,7 @@ public class ConnectionListActivity extends Activity {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                baseNetConnections = new ArrayList<>();
+                baseNetSessions = new ArrayList<>();
                 File file = new File(fileDir);
                 ACache aCache = ACache.get(file);
                 String[] list = file.list();
@@ -78,10 +75,10 @@ public class ConnectionListActivity extends Activity {
                     return;
                 }
                 for (String fileName : list) {
-                    BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
-                    baseNetConnections.add(netConnection);
+                    BaseNetSession netConnection = (BaseNetSession) aCache.getAsObject(fileName);
+                    baseNetSessions.add(netConnection);
                 }
-                Collections.sort(baseNetConnections, new BaseNetConnection.NetConnectionComparator());
+                Collections.sort(baseNetSessions, new BaseNetSession.NetConnectionComparator());
 
                 refreshView();
 
@@ -94,7 +91,7 @@ public class ConnectionListActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (baseNetConnections == null || baseNetConnections.size() == 0) {
+                if (baseNetSessions == null || baseNetSessions.size() == 0) {
                     Toast.makeText(ConnectionListActivity.this, getString(R.string.no_data), Toast.LENGTH_SHORT).show();
                     finish();
                 }
@@ -122,7 +119,7 @@ public class ConnectionListActivity extends Activity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
-            final BaseNetConnection connection = baseNetConnections.get(position);
+            final BaseNetSession connection = baseNetSessions.get(position);
             ConnectionHolder connectionHolder = (ConnectionHolder) holder;
             Drawable icon;
             if (connection.getAppInfo() != null) {
@@ -161,10 +158,10 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (baseNetConnections.get(position).isSSL()) {
+                    if (baseNetSessions.get(position).isSSL()) {
                         return;
                     }
-                    startPacketDetailActivity(baseNetConnections.get(position));
+                    startPacketDetailActivity(baseNetSessions.get(position));
 
 
                 }
@@ -175,7 +172,7 @@ public class ConnectionListActivity extends Activity {
 
         @Override
         public int getItemCount() {
-            return baseNetConnections == null ? 0 : baseNetConnections.size();
+            return baseNetSessions == null ? 0 : baseNetSessions.size();
         }
 
         class ConnectionHolder extends RecyclerView.ViewHolder {
@@ -200,7 +197,7 @@ public class ConnectionListActivity extends Activity {
         }
     }
 
-    private void startPacketDetailActivity(BaseNetConnection connection) {
+    private void startPacketDetailActivity(BaseNetSession connection) {
         String dir = VPNConstants.DATA_DIR
                 + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
                 + "/"

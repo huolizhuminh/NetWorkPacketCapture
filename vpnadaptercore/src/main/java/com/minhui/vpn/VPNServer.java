@@ -3,6 +3,9 @@ package com.minhui.vpn;
 import android.net.VpnService;
 import android.util.Log;
 
+import com.minhui.vpn.utils.MyLRUCache;
+import com.minhui.vpn.utils.SocketUtils;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -19,20 +22,21 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-class VPNServer implements CloseableRun {
+public class VPNServer implements CloseableRun {
     private String TAG = VPNServer.class.getSimpleName();
-    private static final int MAX_CACHE_TCP_SIZE = 20; // XXX: Is this ideal?
-    VpnService vpnService;
-    ConcurrentLinkedQueue<Packet> outputQueue;
-    Selector selector;
+    private static final int MAX_CACHE_TCP_SIZE = 20;
+    private VpnService vpnService;
+    private ConcurrentLinkedQueue<Packet> outputQueue;
+    private Selector selector;
     private final Object tcpLock = new Object();
     private final MyLRUCache<String, TCPConnection> tcpCache =
             new MyLRUCache<>(MAX_CACHE_TCP_SIZE, new MyLRUCache.CleanupCallback<String, TCPConnection>() {
                 @Override
-                public void cleanup(Map.Entry<String, TCPConnection> eldest) {
+                public void cleanUp(Map.Entry<String, TCPConnection> eldest) {
                     VPNLog.d(TAG, "clean up tcpConn " + eldest.getValue().getIpAndPort());
                     eldest.getValue().closeChannelAndClearCache();
                 }
+
             });
 
     private boolean isClose = false;
@@ -41,10 +45,11 @@ class VPNServer implements CloseableRun {
     private final MyLRUCache<String, UDPConnection> udpConnections =
             new MyLRUCache<>(MAX_UDP_CACHE_SIZE, new MyLRUCache.CleanupCallback<String, UDPConnection>() {
                 @Override
-                public void cleanup(Map.Entry<String, UDPConnection> eldest) {
+                public void cleanUp(Map.Entry<String, UDPConnection> eldest) {
                     VPNLog.d(TAG, "clean up updConn " + eldest.getValue().getIpAndPort());
                     eldest.getValue().close();
                 }
+
             });
 
 
@@ -175,15 +180,15 @@ class VPNServer implements CloseableRun {
         synchronized (tcpLock) {
 
             Iterator<Map.Entry<String, TCPConnection>> it = tcpCache.entrySet().iterator();
-            int i=0;
-            int y=tcpCache.size();
+            int i = 0;
+            int y = tcpCache.size();
             while (it.hasNext()) {
                 TCPConnection tcpConnection = it.next().getValue();
                 tcpConnection.closeChannelAndClearCache();
                 it.remove();
                 i++;
             }
-            Log.d(TAG,"closeAllTCPConn iterate time "+i+"  cache size "+y);
+            Log.d(TAG, "closeAllTCPConn iterate time " + i + "  cache size " + y);
 
         }
 
@@ -237,8 +242,8 @@ class VPNServer implements CloseableRun {
         void onKeyReady(SelectionKey key);
     }
 
-    public List<BaseNetConnection> getNetConnections() {
-        List<BaseNetConnection> netConnections = new ArrayList<>();
+    public List<BaseNetSession> getNetConnections() {
+        List<BaseNetSession> netConnections = new ArrayList<>();
 
 
         synchronized (tcpLock) {
@@ -257,13 +262,13 @@ class VPNServer implements CloseableRun {
 
             }
         }
-        Collections.sort(netConnections, new BaseNetConnection.NetConnectionComparator());
+        Collections.sort(netConnections, new BaseNetSession.NetConnectionComparator());
 
 
         return netConnections;
     }
 
-    private void checkAndAddConn(BaseNetConnection connection, List<BaseNetConnection> netConnections) {
+    private void checkAndAddConn(BaseNetSession connection, List<BaseNetSession> netConnections) {
         String packageName = VPNConnectManager.getInstance().getContext().getPackageName();
         String selectPackage = ((LocalVPNService) LocalVPNService.getInstance()).getSelectPackage();
 

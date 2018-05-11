@@ -10,9 +10,10 @@ import android.widget.CheckBox;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.minhui.vpn.ThreadProxy;
+import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -28,6 +29,7 @@ public class SettingFragment extends BaseFragment {
     private Handler handler;
     private ProgressBar pb;
     private CheckBox includeCurrentCapture;
+    private boolean isRunning;
 
     @Override
     int getLayout() {
@@ -52,6 +54,13 @@ public class SettingFragment extends BaseFragment {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getActivity(), AboutActivity.class));
+            }
+        });
+        view.findViewById(R.id.to_firewall).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isRunning = !isRunning;
+                VpnServiceHelper.changeVpnRunningStatus(getActivity(),isRunning);
             }
         });
         includeCurrentCapture = view.findViewById(R.id.check_current_capture);

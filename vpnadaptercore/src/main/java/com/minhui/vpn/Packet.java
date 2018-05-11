@@ -7,6 +7,8 @@ package com.minhui.vpn;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.minhui.vpn.utils.CommonMethods;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -40,6 +42,8 @@ class Packet implements Serializable {
     private String method;
     private String requestUrl;
     private boolean cannotParse;
+    private boolean isHttp;
+    private String urlPath;
 
 
     public boolean isSSL() {
@@ -287,6 +291,20 @@ class Packet implements Serializable {
         return ipAndrPort;
     }
 
+    public String getSegmentHttpName() {
+        if (!isTCP) {
+            return null;
+        }
+        int lastPosition = backingBuffer.position();
+        byte[] array = backingBuffer.array();
+        isSSL = false;
+        String headerString = new String(array, FIRST_TCP_DATA, playLoadSize);
+        String[] headerLines = headerString.split("\\r\\n");
+        hostName = getHttpHost(headerLines);
+        backingBuffer.position(lastPosition);
+        return hostName;
+    }
+
     /**
      * 通过packet包发送的第一个数据判断类型
      * 如果是http协议 则首先发送的是http的请求头，请求头首先声明请求的类型 包括GET Head POST PUT OPTION TRACE CONNECT
@@ -315,6 +333,7 @@ class Packet implements Serializable {
                 case 'T':
                     //CONNECT
                 case 'C':
+                    isHttp = true;
                     getHttpHostAndRequestUrl(array);
                     break;
                 //SSL
@@ -425,42 +444,45 @@ class Packet implements Serializable {
             this.hostName = host;
         }
         String[] parts = headerLines[0].trim().split(" ");
-        if (parts.length == 3) {
+        if (parts.length == 3 || parts.length == 2) {
             method = parts[0];
-            String url = parts[1];
-            VPNLog.d(TAG, "url is " + url);
-            if (url.startsWith("/")) {
-                requestUrl = "http://" + hostName + url;
+            urlPath = parts[1];
+            VPNLog.d(TAG, "urlPath is " + urlPath);
+            if (urlPath.startsWith("/")) {
+                if (hostName != null) {
+                    requestUrl = "http://" + hostName + urlPath;
+                }
+            } else if (urlPath.startsWith("http")) {
+                requestUrl = urlPath;
             } else {
-                requestUrl = "http://" + url;
+                requestUrl = "http://" + urlPath;
             }
         }
     }
 
-    private String getHttpHost(String[] headerLines) {
 
-        String requestLine = headerLines[0];
-        if (requestLine.startsWith("GET") || requestLine.startsWith("POST") || requestLine.startsWith("HEAD")
-                || requestLine.startsWith("OPTIONS")) {
-            for (int i = 1; i < headerLines.length; i++) {
-                String[] nameValueStrings = headerLines[i].split(":");
-                if (nameValueStrings.length == 2||nameValueStrings.length==3) {
-                    String name = nameValueStrings[0].toLowerCase(Locale.ENGLISH).trim();
-                    String value = nameValueStrings[1].trim();
-                    if ("host".equals(name)) {
-                        Log.d(TAG, "value is " + value);
-                        return value;
-                    }
+    private String getHttpHost(String[] headerLines) {
+        for (int i = 1; i < headerLines.length; i++) {
+            String[] nameValueStrings = headerLines[i].split(":");
+            if (nameValueStrings.length == 2 || nameValueStrings.length == 3) {
+                String name = nameValueStrings[0].toLowerCase(Locale.ENGLISH).trim();
+                String value = nameValueStrings[1].trim();
+                if ("host".equals(name)) {
+                    Log.d(TAG, "value is " + value);
+                    return value;
                 }
             }
         }
         return null;
     }
 
-    public String parseAndGetHostName() {
-        String headerString = new String(backingBuffer.array(), FIRST_TCP_DATA, playLoadSize);
-        String[] headerLines = headerString.split("\\r\\n");
-        return getHttpHost(headerLines);
+
+    public boolean isHttp() {
+        return isHttp;
+    }
+
+    public String getUrlPath() {
+        return urlPath;
     }
 
     /**

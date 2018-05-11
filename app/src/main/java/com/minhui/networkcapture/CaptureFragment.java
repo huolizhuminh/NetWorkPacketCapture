@@ -14,19 +14,14 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.minhui.vpn.ACache;
-import com.minhui.vpn.AppInfo;
-import com.minhui.vpn.BaseNetConnection;
+import com.minhui.vpn.processparse.AppInfo;
+import com.minhui.vpn.BaseNetSession;
 import com.minhui.vpn.LocalVPNService;
-import com.minhui.vpn.PortHostService;
-import com.minhui.vpn.ThreadProxy;
-import com.minhui.vpn.TimeFormatUtil;
+import com.minhui.vpn.utils.ThreadProxy;
+import com.minhui.vpn.utils.TimeFormatUtil;
 import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimerTask;
@@ -60,7 +55,7 @@ public class CaptureFragment extends BaseFragment {
     private ListView channelList;
 
 
-    private List<BaseNetConnection> allNetConnection;
+    private List<BaseNetSession> allNetConnection;
     private Context context;
 
     @Override
@@ -97,11 +92,11 @@ public class CaptureFragment extends BaseFragment {
                 if (position > allNetConnection.size() - 1) {
                     return;
                 }
-                BaseNetConnection connection = allNetConnection.get(position);
+                BaseNetSession connection = allNetConnection.get(position);
                 if (connection.isSSL()) {
                     return;
                 }
-                if (!BaseNetConnection.TCP.equals(connection.getType())) {
+                if (!BaseNetSession.TCP.equals(connection.getType())) {
                     return;
                 }
                 String dir = VPNConstants.DATA_DIR
@@ -135,11 +130,11 @@ public class CaptureFragment extends BaseFragment {
                     });
                     return;
                 }
-                Iterator<BaseNetConnection> iterator = allNetConnection.iterator();
+                Iterator<BaseNetSession> iterator = allNetConnection.iterator();
                 String packageName = context.getPackageName();
                 while (iterator.hasNext()) {
-                    BaseNetConnection next = iterator.next();
-                    if (BaseNetConnection.UDP.equals(next.getType())) {
+                    BaseNetSession next = iterator.next();
+                    if (BaseNetSession.UDP.equals(next.getType())) {
                         iterator.remove();
                         continue;
                     }
@@ -177,7 +172,7 @@ public class CaptureFragment extends BaseFragment {
         }, 1000, 1000, TimeUnit.MILLISECONDS);
     }
 
-    private void refreshView(List<BaseNetConnection> allNetConnection) {
+    private void refreshView(List<BaseNetSession> allNetConnection) {
         if (connectionAdapter == null) {
             connectionAdapter = new ConnectionAdapter(context, allNetConnection);
             channelList.setAdapter(connectionAdapter);

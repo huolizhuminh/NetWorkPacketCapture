@@ -2,6 +2,8 @@ package com.minhui.vpn;
 
 import android.net.VpnService;
 
+import com.minhui.vpn.utils.SocketUtils;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -17,7 +19,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-public class UDPConnection extends BaseNetConnection {
+public class UDPConnection extends BaseNetSession {
 
 
     private static final String TAG = UDPConnection.class.getSimpleName();

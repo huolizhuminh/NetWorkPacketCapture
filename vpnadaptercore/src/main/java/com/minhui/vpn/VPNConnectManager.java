@@ -3,6 +3,11 @@ package com.minhui.vpn;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
+import com.minhui.vpn.processparse.NetFileManager;
+import com.minhui.vpn.processparse.PortHostService;
+import com.minhui.vpn.utils.ACache;
+import com.minhui.vpn.utils.TimeFormatUtil;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +32,6 @@ public class VPNConnectManager {
     private long totalReceiveByteNum = 0;
     Map<String, String> hosts = new HashMap<>();
     private ExecutorService executor;
-    List<VPNListener> listeners = new ArrayList<>();
     private Context context;
     private String name;
     private long lastVpnStartTime = 0;
@@ -58,44 +62,37 @@ public class VPNConnectManager {
         return name;
     }
 
-    public void registerListener(VPNListener listener) {
-        listeners.add(listener);
-    }
-
-    public void unRegisterListener(VPNListener listener) {
-        listeners.remove(listener);
-    }
 
     public void setLastVpnStartTime(long time) {
         lastVpnStartTime = time;
         lastVpnStartTimeFormat = TimeFormatUtil.formatYYMMDDHHMMSS(lastVpnStartTime);
     }
 
-    public List<BaseNetConnection> getAllConn() {
+    public List<BaseNetSession> getAllConn() {
         if (lastVpnStartTimeFormat == null) {
             return null;
         }
         File file = new File(VPNConstants.CONFIG_DIR + lastVpnStartTimeFormat);
         ACache aCache = ACache.get(file);
         String[] list = file.list();
-        ArrayList<BaseNetConnection> baseNetConnections = new ArrayList<>();
+        ArrayList<BaseNetSession> baseNetSessions = new ArrayList<>();
         if(list!=null){
 
             for (String fileName : list) {
-                BaseNetConnection netConnection = (BaseNetConnection) aCache.getAsObject(fileName);
-                baseNetConnections.add(netConnection);
+                BaseNetSession netConnection = (BaseNetSession) aCache.getAsObject(fileName);
+                baseNetSessions.add(netConnection);
             }
         }
 
         PortHostService portHostService = PortHostService.getInstance();
         if (portHostService != null) {
-            List<BaseNetConnection> aliveConnInfo = portHostService.getAndRefreshConnInfo();
+            List<BaseNetSession> aliveConnInfo = portHostService.getAndRefreshConnInfo();
             if (aliveConnInfo != null) {
-                baseNetConnections.addAll(aliveConnInfo);
+                baseNetSessions.addAll(aliveConnInfo);
             }
         }
-        Collections.sort(baseNetConnections, new BaseNetConnection.NetConnectionComparator());
-        return baseNetConnections;
+        Collections.sort(baseNetSessions, new BaseNetSession.NetConnectionComparator());
+        return baseNetSessions;
     }
 
     private static class Inner {
@@ -120,24 +117,12 @@ public class VPNConnectManager {
     void addSendNum(Packet packet, int sendNum) {
         totalSendByteNum = totalSendByteNum + sendNum;
         totalSendPacket++;
-        if (listeners.isEmpty()) {
-            return;
-        }
-        VPNListener[] vpnListeners = new VPNListener[listeners.size()];
-        listeners.toArray(vpnListeners);
-        for (VPNListener listener : vpnListeners) {
-            listener.onPacketSend(packet);
-        }
     }
 
     void addReceiveNum(Packet packet, int receiveNum) {
         totalReceiveByteNum = totalReceiveByteNum + receiveNum;
         totalReceivePacket++;
-        VPNListener[] vpnListeners = new VPNListener[listeners.size()];
-        listeners.toArray(vpnListeners);
-        for (VPNListener listener : vpnListeners) {
-            listener.onPacketReceive(packet);
-        }
+
     }
 
     public long getTotalSendNum() {
@@ -148,8 +133,8 @@ public class VPNConnectManager {
         return totalReceiveByteNum;
     }
 
-    public List<BaseNetConnection> getAllNetConnection() {
-        List<BaseNetConnection> netConnections = null;
+    public List<BaseNetSession> getAllNetConnection() {
+        List<BaseNetSession> netConnections = null;
         try {
             netConnections = ((LocalVPNService) LocalVPNService.getInstance()).getVpnServer().getNetConnections();
         } catch (Exception e) {

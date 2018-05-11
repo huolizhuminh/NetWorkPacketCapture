@@ -8,6 +8,12 @@ import android.net.VpnService;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.minhui.vpn.processparse.PortHostService;
+import com.minhui.vpn.utils.ACache;
+import com.minhui.vpn.utils.SocketUtils;
+import com.minhui.vpn.utils.TcpDataSaveHelper;
+import com.minhui.vpn.utils.ThreadProxy;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -18,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * Transmission Control Block
  */
-public class TCPConnection extends BaseNetConnection implements Serializable {
+public class TCPConnection extends BaseNetSession implements Serializable {
     private static final String TAG = TCPConnection.class.getSimpleName();
     private static final int VALID_TCP_DATA_SIZE = 10;
     private final VpnService vpnService;
@@ -62,6 +67,8 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
 
     private final TcpDataSaveHelper tcpDataSaveHelper;
     private final String lastVpnStartTimeStr;
+    private boolean isHttp;
+    private String urlPath;
 
     TCPConnection(VpnService vpnService, Selector selector, VPNServer vpnServer, Packet packet, ConcurrentLinkedQueue<Packet> outputQueue) {
         super();
@@ -119,15 +126,8 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
                 int playLoadSize = payloadBuffer.limit() - payloadBuffer.position();
 
                 saveConversationData(payloadBuffer, playLoadSize, true);
-                if (sendByteNum == 0 && playLoadSize > VALID_TCP_DATA_SIZE) {
-                    toNetPacket.parseHttpRequestHeader();
-                    hostName = toNetPacket.getHostName();
-                    isSSL = toNetPacket.isSSL();
-                    url = toNetPacket.getRequestUrl();
-                }
-                if (!isSSL && hostName == null && playLoadSize > VALID_TCP_DATA_SIZE) {
-                    hostName = toNetPacket.parseAndGetHostName();
-                }
+                checkAndParsePacket(toNetPacket,playLoadSize);
+
                 while (payloadBuffer.hasRemaining()) {
                     channel.write(payloadBuffer);
                 }
@@ -161,6 +161,21 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
             packet.updateTCPBuffer(responseBuffer, (byte) Packet.TCPHeader.RST, 0, myAcknowledgementNum, 0);
             outputQueue.offer(packet);
             vpnServer.closeTCPConnection(this);
+        }
+    }
+
+    private void checkAndParsePacket(Packet toNetPacket,int playLoadSize) {
+        if (sendByteNum == 0 && playLoadSize > VALID_TCP_DATA_SIZE) {
+            toNetPacket.parseHttpRequestHeader();
+            hostName = toNetPacket.getHostName();
+            isSSL = toNetPacket.isSSL();
+            isHttp = toNetPacket.isHttp();
+            url = toNetPacket.getRequestUrl();
+            urlPath = toNetPacket.getUrlPath();
+        } else if (hostName == null && isHttp) {
+            hostName = toNetPacket.getSegmentHttpName();
+            url = "http://" + hostName + urlPath;
+
         }
     }
 
@@ -627,7 +642,7 @@ public class TCPConnection extends BaseNetConnection implements Serializable {
                         return;
                     }
                     ACache configACache = ACache.get(parentFile);
-                    BaseNetConnection baseConnection = new BaseNetConnection(TCPConnection.this);
+                    BaseNetSession baseConnection = new BaseNetSession(TCPConnection.this);
                     configACache.put(getUniqueName(), baseConnection);
                     hasWriteConnConfig = true;
                 } catch (Exception e) {

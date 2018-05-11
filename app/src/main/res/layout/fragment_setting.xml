@@ -61,6 +61,21 @@
 
             </RelativeLayout>
 
+            <RelativeLayout
+                android:id="@+id/to_firewall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_btn"
+                android:padding="15dp">
+
+                <TextView
+                    style="@style/setting_text_explain"
+                    android:text="to_firewall" />
+
+
+            </RelativeLayout>
+
+
         </LinearLayout>
 
 
