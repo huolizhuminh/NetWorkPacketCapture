@@ -257,7 +257,11 @@ public class FirewallVpnService extends VpnService implements Runnable {
                 ThreadProxy.getInstance().execute(new Runnable() {
                     @Override
                     public void run() {
-                        PortHostService.getInstance().refreshSessionInfo();
+                        PortHostService instance = PortHostService.getInstance();
+                        if(instance !=null){
+                            instance.refreshSessionInfo();
+                        }
+
                     }
                 });
             }

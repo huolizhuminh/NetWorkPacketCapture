@@ -11,6 +11,7 @@ import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
+import com.minhui.vpn.processparse.PortHostService;
 import com.minhui.vpn.utils.ACache;
 import com.minhui.vpn.utils.SocketUtils;
 import com.minhui.vpn.utils.TcpDataSaveHelper;
@@ -191,6 +192,9 @@ public class UDPTunnel implements KeyHandler {
         try {
             selectionKey.cancel();
             channel.close();
+            if(session.appInfo==null){
+                PortHostService.getInstance().refreshSessionInfo();
+            }
             //需要延迟一秒在保存 等到app信息完全刷新
             handler.postDelayed(new Runnable() {
                 @Override
