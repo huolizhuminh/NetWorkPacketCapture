@@ -1,24 +1,17 @@
 package com.minhui.vpn;
 
 import android.net.VpnService;
-import android.util.Log;
 
 import com.minhui.vpn.tunnel.UDPTunnel;
 import com.minhui.vpn.utils.AppDebug;
 import com.minhui.vpn.utils.DebugLog;
 import com.minhui.vpn.utils.MyLRUCache;
-import com.minhui.vpn.utils.SocketUtils;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -35,12 +28,11 @@ public class UDPServer implements Runnable {
     private boolean isClose = false;
 
     private static final int MAX_UDP_CACHE_SIZE = 50;
-    private final MyLRUCache<String, UDPTunnel> udpConnections =
-            new MyLRUCache<>(MAX_UDP_CACHE_SIZE, new MyLRUCache.CleanupCallback<String, UDPTunnel>() {
+    private final MyLRUCache<Short, UDPTunnel> udpConnections =
+            new MyLRUCache<>(MAX_UDP_CACHE_SIZE, new MyLRUCache.CleanupCallback<UDPTunnel>() {
                 @Override
-                public void cleanUp(Map.Entry<String, UDPTunnel> eldest) {
-                    VPNLog.d(TAG, "clean up updConn " + eldest.getValue().getIpAndPort());
-                    eldest.getValue().close();
+                public void cleanUp(UDPTunnel udpTunnel) {
+                    udpTunnel.close();
                 }
 
             });
@@ -64,16 +56,13 @@ public class UDPServer implements Runnable {
     }
 
 
-    public void processUDPPacket(Packet packet) {
-        String ipAndPort = packet.getIpAndPort();
-        UDPTunnel udpConn = getUDPConn(ipAndPort);
+    public void processUDPPacket(Packet packet,short portKey) {
+        UDPTunnel udpConn = getUDPConn(portKey);
         if (udpConn == null) {
-            VPNLog.d(TAG, "upd no conn ipAndPort:" + ipAndPort);
-            udpConn = new UDPTunnel(vpnService, selector, this, packet, outputQueue);
-            putUDPConn(ipAndPort, udpConn);
+            udpConn = new UDPTunnel(vpnService, selector, this, packet, outputQueue,portKey);
+            putUDPConn(portKey, udpConn);
             udpConn.initConnection();
         } else {
-            VPNLog.d(TAG, "upd packet ipAndPort:" + ipAndPort);
             udpConn.processPacket(packet);
         }
     }
@@ -81,7 +70,7 @@ public class UDPServer implements Runnable {
 
     public void closeAllUDPConn() {
         synchronized (udpConnections) {
-            Iterator<Map.Entry<String, UDPTunnel>> it = udpConnections.entrySet().iterator();
+            Iterator<Map.Entry<Short, UDPTunnel>> it = udpConnections.entrySet().iterator();
             while (it.hasNext()) {
                 it.next().getValue().close();
                 it.remove();
@@ -93,17 +82,17 @@ public class UDPServer implements Runnable {
     public void closeUDPConn(UDPTunnel connection) {
         synchronized (udpConnections) {
             connection.close();
-            udpConnections.remove(connection.getIpAndPort());
+            udpConnections.remove(connection.getPortKey());
         }
     }
 
-    public UDPTunnel getUDPConn(String ipAndPort) {
+    public UDPTunnel getUDPConn(short portKey) {
         synchronized (udpConnections) {
-            return udpConnections.get(ipAndPort);
+            return udpConnections.get(portKey);
         }
     }
 
-    void putUDPConn(String ipAndPort, UDPTunnel connection) {
+    void putUDPConn(short ipAndPort, UDPTunnel connection) {
         synchronized (udpConnections) {
             udpConnections.put(ipAndPort, connection);
         }

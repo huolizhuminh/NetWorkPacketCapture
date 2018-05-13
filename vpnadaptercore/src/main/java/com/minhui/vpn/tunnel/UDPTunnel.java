@@ -1,16 +1,24 @@
 package com.minhui.vpn.tunnel;
 
 import android.net.VpnService;
+import android.os.Handler;
+import android.os.Looper;
 
-import com.minhui.vpn.BaseNetSession;
 import com.minhui.vpn.KeyHandler;
 import com.minhui.vpn.Packet;
 import com.minhui.vpn.UDPServer;
-import com.minhui.vpn.VPNConnectManager;
+import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.VPNLog;
-import com.minhui.vpn.VPNServer;
+import com.minhui.vpn.nat.NatSession;
+import com.minhui.vpn.nat.NatSessionManager;
+import com.minhui.vpn.utils.ACache;
 import com.minhui.vpn.utils.SocketUtils;
+import com.minhui.vpn.utils.TcpDataSaveHelper;
+import com.minhui.vpn.utils.ThreadProxy;
+import com.minhui.vpn.utils.TimeFormatUtil;
+import com.minhui.vpn.utils.VpnServiceHelper;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -26,7 +34,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Copyright © 2017年 minhui.zhu. All rights reserved.
  */
 
-public class UDPTunnel extends BaseNetSession implements KeyHandler{
+public class UDPTunnel implements KeyHandler {
 
 
     private static final String TAG = UDPTunnel.class.getSimpleName();
@@ -34,25 +42,40 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
     private final Selector selector;
     private final UDPServer vpnServer;
     private final Queue<Packet> outputQueue;
+    private TcpDataSaveHelper helper;
     private Packet referencePacket;
     private SelectionKey selectionKey;
 
     private DatagramChannel channel;
     private final ConcurrentLinkedQueue<Packet> toNetWorkPackets = new ConcurrentLinkedQueue<>();
     private static final int HEADER_SIZE = Packet.IP4_HEADER_SIZE + Packet.UDP_HEADER_SIZE;
+    private Short portKey;
+    String ipAndPort;
+    private final NatSession session;
+    private final Handler handler;
 
-
-    public UDPTunnel(VpnService vpnService, Selector selector, UDPServer vpnServer, Packet packet, Queue<Packet> outputQueue) {
+    public UDPTunnel(VpnService vpnService, Selector selector, UDPServer vpnServer, Packet packet, Queue<Packet> outputQueue, short portKey) {
         this.vpnService = vpnService;
         this.selector = selector;
         this.vpnServer = vpnServer;
         this.referencePacket = packet;
         ipAndPort = packet.getIpAndPort();
         this.outputQueue = outputQueue;
-        port = packet.udpHeader.sourcePort;
-        type = UDP;
-    }
+        this.portKey = portKey;
+        session = NatSessionManager.getSession(portKey);
+        handler = new Handler(Looper.getMainLooper());
 
+        if (VpnServiceHelper.isUDPDataNeedSave()) {
+            String helperDir = new StringBuilder()
+                    .append(VPNConstants.DATA_DIR)
+                    .append(TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime))
+                    .append("/")
+                    .append(session.getUniqueName())
+                    .toString();
+            helper = new TcpDataSaveHelper(helperDir);
+        }
+
+    }
 
 
     private void processKey(SelectionKey key) {
@@ -89,11 +112,27 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
             receiveBuffer.position(HEADER_SIZE + readBytes);
             outputQueue.offer(newPacket);
             VPNLog.d(TAG, "read  data :readBytes:" + readBytes + "ipAndPort:" + ipAndPort);
-            VPNConnectManager.getInstance().addReceiveNum(newPacket, readBytes);
-            receivePacketNum++;
-            receiveByteNum = receiveByteNum + readBytes;
-            refreshTime = System.currentTimeMillis();
+            session.receivePacketNum++;
+            session.receiveByteNum += readBytes;
+            session.lastRefreshTime = System.currentTimeMillis();
+
+            if (VpnServiceHelper.isUDPDataNeedSave() && helper != null) {
+                saveData(receiveBuffer.array(), readBytes, false);
+            }
+
         }
+    }
+
+    private void saveData(byte[] array, int saveSize, boolean isRequest) {
+        TcpDataSaveHelper.SaveData saveData = new TcpDataSaveHelper
+                .SaveData
+                .Builder()
+                .offSet(HEADER_SIZE)
+                .length(saveSize)
+                .needParseData(array)
+                .isRequest(isRequest)
+                .build();
+        helper.addData(saveData);
     }
 
     private void processSend() {
@@ -105,12 +144,14 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
         }
         try {
             ByteBuffer payloadBuffer = toNetWorkPacket.backingBuffer;
-
-            VPNConnectManager.getInstance().addSendNum(toNetWorkPacket, payloadBuffer.limit() - payloadBuffer.position());
-            sendPacketNum++;
-            sendByteNum = sendByteNum + payloadBuffer.limit() - payloadBuffer.position();
-            refreshTime = System.currentTimeMillis();
-            while (payloadBuffer.hasRemaining()){
+            session.packetSent++;
+            int sendSize = payloadBuffer.limit() - payloadBuffer.position();
+            session.bytesSent += sendSize;
+            if (VpnServiceHelper.isUDPDataNeedSave() && helper != null) {
+                saveData(payloadBuffer.array(), sendSize, true);
+            }
+            session.lastRefreshTime = System.currentTimeMillis();
+            while (payloadBuffer.hasRemaining()) {
                 channel.write(payloadBuffer);
             }
 
@@ -128,18 +169,13 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
         try {
             channel = DatagramChannel.open();
             vpnService.protect(channel.socket());
-            VPNLog.i(TAG, "ipAndPort is " + ipAndPort);
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(destinationAddress, destinationPort));
-            VPNLog.i(TAG,"end connect");
             selector.wakeup();
-            VPNLog.i(TAG,"end wakeup");
             selectionKey = channel.register(selector,
                     SelectionKey.OP_READ, this);
-            VPNLog.d(TAG,"end reigster");
         } catch (IOException e) {
             SocketUtils.closeResources(channel);
-            VPNLog.w(TAG, "Connection error: " + ipAndPort, e);
             return;
         }
         referencePacket.swapSourceAndDestination();
@@ -151,16 +187,43 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
         updateInterests();
     }
 
-    public  void close() {
+    public void close() {
         try {
             selectionKey.cancel();
             channel.close();
+            //需要延迟一秒在保存 等到app信息完全刷新
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    ThreadProxy.getInstance().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (session.receiveByteNum == 0 && session.bytesSent == 0) {
+                                return;
+                            }
+
+                            String configFileDir = VPNConstants.CONFIG_DIR
+                                    + TimeFormatUtil.formatYYMMDDHHMMSS(session.vpnStartTime);
+                            File parentFile = new File(configFileDir);
+                            if (!parentFile.exists()) {
+                                parentFile.mkdirs();
+                            }
+                            //说已经存了
+                            File file = new File(parentFile, session.getUniqueName());
+                            if (file.exists()) {
+                                return;
+                            }
+                            ACache configACache = ACache.get(parentFile);
+                            configACache.put(session.getUniqueName(), session);
+                        }
+                    });
+                }
+            }, 1000);
         } catch (IOException e) {
             VPNLog.w(TAG, "error to close UDP channel IpAndPort" + ipAndPort + ",error is " + e.getMessage());
         }
 
     }
-
 
 
     Packet getToNetWorkPackets() {
@@ -193,9 +256,12 @@ public class UDPTunnel extends BaseNetSession implements KeyHandler{
     }
 
 
-
     @Override
     public void onKeyReady(SelectionKey key) {
         processKey(key);
+    }
+
+    public Short getPortKey() {
+        return portKey;
     }
 }

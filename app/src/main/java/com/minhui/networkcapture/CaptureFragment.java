@@ -1,26 +1,23 @@
 package com.minhui.networkcapture;
 
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.minhui.vpn.ProxyConfig;
+import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.processparse.AppInfo;
-import com.minhui.vpn.BaseNetSession;
-import com.minhui.vpn.LocalVPNService;
 import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.utils.TimeFormatUtil;
-import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
+import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.util.Iterator;
 import java.util.List;
@@ -38,14 +35,17 @@ import java.util.concurrent.TimeUnit;
 
 public class CaptureFragment extends BaseFragment {
     private static final String TAG = "CaptureFragment";
-    private BroadcastReceiver vpnStateReceiver = new BroadcastReceiver() {
+
+    ProxyConfig.VpnStatusListener listener = new ProxyConfig.VpnStatusListener() {
+
         @Override
-        public void onReceive(Context context, Intent intent) {
-            if (LocalVPNService.isRunning()) {
-                startTimer();
-            } else {
-                cancelTimer();
-            }
+        public void onVpnStart(Context context) {
+            startTimer();
+        }
+
+        @Override
+        public void onVpnEnd(Context context) {
+            cancelTimer();
         }
     };
     private ScheduledExecutorService timer;
@@ -55,7 +55,7 @@ public class CaptureFragment extends BaseFragment {
     private ListView channelList;
 
 
-    private List<BaseNetSession> allNetConnection;
+    private List<NatSession> allNetConnection;
     private Context context;
 
     @Override
@@ -68,7 +68,7 @@ public class CaptureFragment extends BaseFragment {
     public void onDestroyView() {
         Log.d(TAG, "onDestroyView");
         super.onDestroyView();
-        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(vpnStateReceiver);
+        ProxyConfig.Instance.unregisterVpnStatusListener(listener);
         cancelTimer();
         //    connectionAdapter = null;
     }
@@ -92,23 +92,24 @@ public class CaptureFragment extends BaseFragment {
                 if (position > allNetConnection.size() - 1) {
                     return;
                 }
-                BaseNetSession connection = allNetConnection.get(position);
-                if (connection.isSSL()) {
+                NatSession connection = allNetConnection.get(position);
+                if (connection.isHttpsSession) {
                     return;
                 }
-                if (!BaseNetSession.TCP.equals(connection.getType())) {
+                if (!NatSession.TCP.equals(connection.type)) {
                     return;
                 }
                 String dir = VPNConstants.DATA_DIR
-                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
+                        + TimeFormatUtil.formatYYMMDDHHMMSS(connection.vpnStartTime)
                         + "/"
                         + connection.getUniqueName();
                 PacketDetailActivity.startActivity(getActivity(), dir);
             }
         });
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,
-                new IntentFilter(LocalVPNService.BROADCAST_VPN_STATE));
-        if (LocalVPNService.isRunning()) {
+       /* LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,
+                new IntentFilter(LocalVPNService.BROADCAST_VPN_STATE));*/
+       ProxyConfig.Instance.registerVpnStatusListener(listener);
+        if (VpnServiceHelper.vpnRunningStatus()) {
             startTimer();
         }
         getDataAndRefreshView();
@@ -120,7 +121,7 @@ public class CaptureFragment extends BaseFragment {
         ThreadProxy.getInstance().execute(new Runnable() {
             @Override
             public void run() {
-                allNetConnection = VPNConnectManager.getInstance().getAllConn();
+                allNetConnection = VpnServiceHelper.getAllSession();
                 if (allNetConnection == null) {
                     handler.post(new Runnable() {
                         @Override
@@ -130,15 +131,18 @@ public class CaptureFragment extends BaseFragment {
                     });
                     return;
                 }
-                Iterator<BaseNetSession> iterator = allNetConnection.iterator();
+                Iterator<NatSession> iterator = allNetConnection.iterator();
                 String packageName = context.getPackageName();
+                SharedPreferences sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
+                boolean isShowUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
+
                 while (iterator.hasNext()) {
-                    BaseNetSession next = iterator.next();
-                    if (BaseNetSession.UDP.equals(next.getType())) {
+                    NatSession next = iterator.next();
+                    if (NatSession.UDP.equals(next.type)&&!isShowUDP) {
                         iterator.remove();
                         continue;
                     }
-                    AppInfo appInfo = next.getAppInfo();
+                    AppInfo appInfo = next.appInfo;
                     if (appInfo != null
                             && appInfo.pkgs.getAt(0) != null
                             && packageName.equals(appInfo.pkgs.getAt(0))) {
@@ -172,7 +176,7 @@ public class CaptureFragment extends BaseFragment {
         }, 1000, 1000, TimeUnit.MILLISECONDS);
     }
 
-    private void refreshView(List<BaseNetSession> allNetConnection) {
+    private void refreshView(List<NatSession> allNetConnection) {
         if (connectionAdapter == null) {
             connectionAdapter = new ConnectionAdapter(context, allNetConnection);
             channelList.setAdapter(connectionAdapter);
