@@ -11,6 +11,7 @@ import android.os.ParcelFileDescriptor;
 
 import com.minhui.vpn.Packet;
 import com.minhui.vpn.ProxyConfig;
+import com.minhui.vpn.R;
 import com.minhui.vpn.UDPServer;
 import com.minhui.vpn.VPNLog;
 import com.minhui.vpn.http.HttpRequestHeaderParser;
@@ -348,7 +349,7 @@ public class FirewallVpnService extends VpnService implements Runnable {
             e.printStackTrace();
         }
 
-        builder.setSession(ProxyConfig.Instance.getSessionName());
+        builder.setSession(getString(R.string.app_name));
         ParcelFileDescriptor pfdDescriptor = builder.establish();
         //  notifyStatus(new VPNEvent(VPNEvent.Status.ESTABLISHED));
         return pfdDescriptor;
