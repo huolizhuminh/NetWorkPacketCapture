@@ -2,6 +2,8 @@ package com.minhui.vpn.tunnel;
 
 
 import com.minhui.vpn.KeyHandler;
+import com.minhui.vpn.nat.NatSession;
+import com.minhui.vpn.nat.NatSessionManager;
 import com.minhui.vpn.service.FirewallVpnService;
 import com.minhui.vpn.utils.AppDebug;
 import com.minhui.vpn.utils.DebugLog;
@@ -273,6 +275,7 @@ public abstract class TcpTunnel implements KeyHandler {
             sessionCount--;
 
             onDispose();
+            NatSessionManager.removeSession(portKey);
         }
     }
 

@@ -108,4 +108,7 @@ public class NatSessionManager {
         return session;
     }
 
+    public static void removeSession(short portKey) {
+        sessions.remove(portKey);
+    }
 }

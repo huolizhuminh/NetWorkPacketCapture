@@ -14,6 +14,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.minhui.vpn.VPNConstants;
 import com.minhui.vpn.utils.SaveDataFileParser;
 import com.minhui.vpn.utils.ThreadProxy;
 

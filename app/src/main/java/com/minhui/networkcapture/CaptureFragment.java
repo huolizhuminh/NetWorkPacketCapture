@@ -26,6 +26,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static com.minhui.vpn.VPNConstants.DEFAULT_PACKAGE_ID;
+import static com.minhui.vpn.VPNConstants.VPN_SP_NAME;
+
 
 /**
  * @author minhui.zhu
@@ -108,7 +111,7 @@ public class CaptureFragment extends BaseFragment {
         });
        /* LocalBroadcastManager.getInstance(getContext()).registerReceiver(vpnStateReceiver,
                 new IntentFilter(LocalVPNService.BROADCAST_VPN_STATE));*/
-       ProxyConfig.Instance.registerVpnStatusListener(listener);
+        ProxyConfig.Instance.registerVpnStatusListener(listener);
         if (VpnServiceHelper.vpnRunningStatus()) {
             startTimer();
         }
@@ -133,20 +136,33 @@ public class CaptureFragment extends BaseFragment {
                 }
                 Iterator<NatSession> iterator = allNetConnection.iterator();
                 String packageName = context.getPackageName();
+
                 SharedPreferences sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
                 boolean isShowUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
-
+                String selectPackage = sp.getString(DEFAULT_PACKAGE_ID, null);
                 while (iterator.hasNext()) {
                     NatSession next = iterator.next();
-                    if (NatSession.UDP.equals(next.type)&&!isShowUDP) {
+                    if (next.bytesSent == 0 && next.receiveByteNum == 0) {
+                        iterator.remove();
+                        continue;
+                    }
+                    if (NatSession.UDP.equals(next.type) && !isShowUDP) {
                         iterator.remove();
                         continue;
                     }
                     AppInfo appInfo = next.appInfo;
-                    if (appInfo != null
-                            && appInfo.pkgs.getAt(0) != null
-                            && packageName.equals(appInfo.pkgs.getAt(0))) {
-                        iterator.remove();
+
+                    if (appInfo != null) {
+                        String appPackageName = appInfo.pkgs.getAt(0);
+                        if (packageName.equals(appPackageName) ) {
+                            iterator.remove();
+                            continue;
+                        }
+                        if((selectPackage != null && !selectPackage.equals(appPackageName))){
+                            iterator.remove();
+                        }
+
+
                     }
                 }
                 if (handler == null) {

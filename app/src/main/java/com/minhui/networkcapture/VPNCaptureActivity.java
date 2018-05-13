@@ -42,9 +42,7 @@ import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.util.ArrayList;
 
-import static com.minhui.networkcapture.AppConstants.DATA_SAVE;
-import static com.minhui.networkcapture.AppConstants.DEFAULT_PACAGE_NAME;
-import static com.minhui.networkcapture.AppConstants.DEFAULT_PACKAGE_ID;
+import static com.minhui.vpn.VPNConstants.*;
 import static com.minhui.vpn.utils.VpnServiceHelper.START_VPN_SERVICE_REQUEST_CODE;
 
 
@@ -87,11 +85,6 @@ public class VPNCaptureActivity extends FragmentActivity {
         vpnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              /*  if (LocalVPNService.isRunning()) {
-                    closeVpn();
-                } else {
-                    startVPN();
-                }*/
               if(VpnServiceHelper.vpnRunningStatus()){
                   closeVpn();
               }else {
@@ -101,7 +94,7 @@ public class VPNCaptureActivity extends FragmentActivity {
         });
         packageId = (TextView) findViewById(R.id.package_id);
 
-        sharedPreferences = getSharedPreferences(DATA_SAVE, MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(VPN_SP_NAME, MODE_PRIVATE);
         selectPackage = sharedPreferences.getString(DEFAULT_PACKAGE_ID, null);
         selectName = sharedPreferences.getString(DEFAULT_PACAGE_NAME, null);
         packageId.setText(selectName != null ? selectName :
@@ -288,7 +281,6 @@ public class VPNCaptureActivity extends FragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-      //  LocalBroadcastManager.getInstance(this).unregisterReceiver(vpnStateReceiver);
         ProxyConfig.Instance.unregisterVpnStatusListener(vpnStatusListener);
     }
 
@@ -296,14 +288,6 @@ public class VPNCaptureActivity extends FragmentActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == START_VPN_SERVICE_REQUEST_CODE && resultCode == RESULT_OK) {
-          /*  Intent intent = new Intent(this, LocalVPNService.class);
-            intent.setAction(LocalVPNService.ACTION_START_VPN);
-            if (selectPackage != null) {
-                intent.putExtra(LocalVPNService.SELECT_PACKAGE_ID, selectPackage.trim());
-            }
-            startService(intent);
-
-            VPNConnectManager.getInstance().resetNum();*/
           VpnServiceHelper.startVpnService(getApplicationContext());
         } else if (requestCode == REQUEST_PACKAGE && resultCode == RESULT_OK) {
             PackageShowInfo showInfo = (PackageShowInfo) data.getParcelableExtra(PackageListActivity.SELECT_PACKAGE);

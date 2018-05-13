@@ -40,11 +40,6 @@ public class VpnServiceHelper {
         sVpnService = null;
     }
 
-    public static void sendUDPPacket(IPHeader ipHeader, UDPHeader udpHeader) {
-        if (sVpnService != null) {
-            sVpnService.sendUDPPacket(ipHeader, udpHeader);
-        }
-    }
 
     public static Context getContext() {
         return context;
