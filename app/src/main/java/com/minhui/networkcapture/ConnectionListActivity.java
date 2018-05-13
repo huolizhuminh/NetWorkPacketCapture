@@ -1,7 +1,9 @@
 package com.minhui.networkcapture;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -15,9 +17,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.utils.ACache;
 import com.minhui.vpn.processparse.AppInfo;
-import com.minhui.vpn.BaseNetSession;
 import com.minhui.vpn.utils.ThreadProxy;
 import com.minhui.vpn.utils.TimeFormatUtil;
 import com.minhui.vpn.VPNConstants;
@@ -37,7 +39,7 @@ public class ConnectionListActivity extends Activity {
     private RecyclerView recyclerView;
     public static final String FILE_DIRNAME = "file_dirname";
     private String fileDir;
-    private ArrayList<BaseNetSession> baseNetSessions;
+    private ArrayList<NatSession> baseNetSessions;
     private Handler handler;
     private ConnectionAdapter connectionAdapter;
     private PackageManager packageManager;
@@ -74,11 +76,17 @@ public class ConnectionListActivity extends Activity {
                     refreshView();
                     return;
                 }
+                SharedPreferences sp = getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
+                boolean isShowUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
                 for (String fileName : list) {
-                    BaseNetSession netConnection = (BaseNetSession) aCache.getAsObject(fileName);
+
+                    NatSession netConnection = (NatSession) aCache.getAsObject(fileName);
+                    if (NatSession.UDP.equals(netConnection.type) && !isShowUDP) {
+                        continue;
+                    }
                     baseNetSessions.add(netConnection);
                 }
-                Collections.sort(baseNetSessions, new BaseNetSession.NetConnectionComparator());
+                Collections.sort(baseNetSessions, new NatSession.NatSesionComparator());
 
                 refreshView();
 
@@ -119,7 +127,7 @@ public class ConnectionListActivity extends Activity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
-            final BaseNetSession connection = baseNetSessions.get(position);
+            final NatSession connection = baseNetSessions.get(position);
             ConnectionHolder connectionHolder = (ConnectionHolder) holder;
             Drawable icon;
             if (connection.getAppInfo() != null) {
@@ -135,15 +143,15 @@ public class ConnectionListActivity extends Activity {
                 connectionHolder.processName.setText(getString(R.string.unknow));
             }
 
-            connectionHolder.hostName.setVisibility(connection.getUrl() != null || connection.getHostName() != null ?
+            connectionHolder.hostName.setVisibility(connection.getRequestUrl() != null || connection.getRemoteHost() != null ?
                     View.VISIBLE : View.GONE);
-            connectionHolder.hostName.setText(connection.getUrl() != null ? connection.getUrl() : connection.getHostName());
+            connectionHolder.hostName.setText(connection.getRequestUrl() != null ? connection.getRequestUrl() : connection.getRemoteHost());
             connectionHolder.netState.setText(connection.getIpAndPort());
-            connectionHolder.isSSL.setVisibility(connection.isSSL() ? View.VISIBLE : View.GONE);
+            connectionHolder.isSSL.setVisibility(connection.isHttpsSession() ? View.VISIBLE : View.GONE);
 
 
             connectionHolder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.getRefreshTime()));
-            int sumByte = (int) (connection.getSendByteNum() + connection.getReceiveByteNum());
+            int sumByte = (int) (connection.getBytesSent() + connection.getReceiveByteNum());
 
             String showSum;
             if (sumByte > 1000000) {
@@ -158,7 +166,7 @@ public class ConnectionListActivity extends Activity {
             connectionHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (baseNetSessions.get(position).isSSL()) {
+                    if (baseNetSessions.get(position).isHttpsSession()) {
                         return;
                     }
                     startPacketDetailActivity(baseNetSessions.get(position));
@@ -197,7 +205,7 @@ public class ConnectionListActivity extends Activity {
         }
     }
 
-    private void startPacketDetailActivity(BaseNetSession connection) {
+    private void startPacketDetailActivity(NatSession connection) {
         String dir = VPNConstants.DATA_DIR
                 + TimeFormatUtil.formatYYMMDDHHMMSS(connection.getVpnStartTime())
                 + "/"

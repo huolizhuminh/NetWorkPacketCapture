@@ -28,5 +28,7 @@
     <string name="response_head">Response Head</string>
     <string name="request_body">Request Body:</string>
     <string name="response_body">Response Body:</string>
-    <string name="no_data">Data has been clear!!</string>
+    <string name="no_data">Data not existed!!</string>
+    <string name="show_udp">Show UDP</string>
+    <string name="save_udp">Save UDP Packet</string>
 </resources>

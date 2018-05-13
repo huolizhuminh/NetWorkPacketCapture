@@ -1,19 +1,21 @@
 package com.minhui.networkcapture;
 
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.minhui.vpn.service.FirewallVpnService;
 import com.minhui.vpn.utils.ThreadProxy;
-import com.minhui.vpn.VPNConnectManager;
 import com.minhui.vpn.VPNConstants;
-import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -30,6 +32,11 @@ public class SettingFragment extends BaseFragment {
     private ProgressBar pb;
     private CheckBox includeCurrentCapture;
     private boolean isRunning;
+    private SharedPreferences sp;
+    private CheckBox cbShowUDP;
+    private CheckBox cbSaveUDP;
+    private boolean saveUDP;
+    private boolean showUDP;
 
     @Override
     int getLayout() {
@@ -56,11 +63,25 @@ public class SettingFragment extends BaseFragment {
                 startActivity(new Intent(getActivity(), AboutActivity.class));
             }
         });
-        view.findViewById(R.id.to_firewall).setOnClickListener(new View.OnClickListener() {
+        cbShowUDP = view.findViewById(R.id.show_udp);
+        cbSaveUDP = view.findViewById(R.id.save_udp);
+        sp = getContext().getSharedPreferences(VPNConstants.VPN_SP_NAME, Context.MODE_PRIVATE);
+        saveUDP = sp.getBoolean(VPNConstants.IS_UDP_NEED_SAVE, false);
+        showUDP = sp.getBoolean(VPNConstants.IS_UDP_SHOW, false);
+        cbSaveUDP.setChecked(saveUDP);
+        cbShowUDP.setChecked(showUDP);
+        cbShowUDP.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-                isRunning = !isRunning;
-                VpnServiceHelper.changeVpnRunningStatus(getActivity(),isRunning);
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                showUDP = isChecked;
+                sp.edit().putBoolean(VPNConstants.IS_UDP_SHOW, showUDP).apply();
+            }
+        });
+        cbSaveUDP.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                saveUDP = isChecked;
+                sp.edit().putBoolean(VPNConstants.IS_UDP_NEED_SAVE, saveUDP).apply();
             }
         });
         includeCurrentCapture = view.findViewById(R.id.check_current_capture);
@@ -89,7 +110,7 @@ public class SettingFragment extends BaseFragment {
                             return false;
                         }
 
-                        String lastVpnStartTimeStr = VPNConnectManager.getInstance().getLastVpnStartTimeStr();
+                        String lastVpnStartTimeStr = FirewallVpnService.lastVpnStartTimeFormat;
                         if (lastVpnStartTimeStr == null) {
                             return true;
                         }

@@ -95,7 +95,7 @@ public class TcpDataSaveHelper {
     }
 
 
-  public   static class SaveData {
+    public static class SaveData {
         boolean isRequest;
         byte[] needParseData;
         int offSet;

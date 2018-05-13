@@ -7,8 +7,8 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.processparse.AppInfo;
-import com.minhui.vpn.BaseNetSession;
 import com.minhui.vpn.utils.TimeFormatUtil;
 
 import java.util.List;
@@ -21,14 +21,14 @@ import java.util.List;
 
 public class ConnectionAdapter extends BaseAdapter {
     private final Context context;
-    private List<BaseNetSession> netConnections;
+    private List<NatSession> netConnections;
 
-    ConnectionAdapter(Context context, List<BaseNetSession> netConnections) {
+    ConnectionAdapter(Context context, List<NatSession> netConnections) {
         this.context = context;
         this.netConnections = netConnections;
     }
 
-    public void setNetConnections(List<BaseNetSession> netConnections) {
+    public void setNetConnections(List<NatSession> netConnections) {
         this.netConnections = netConnections;
     }
 
@@ -58,7 +58,7 @@ public class ConnectionAdapter extends BaseAdapter {
         } else {
             holder = (Holder) convertView.getTag();
         }
-        BaseNetSession connection = netConnections.get(position);
+        NatSession connection = netConnections.get(position);
         if (connection.getAppInfo() != null) {
 
             holder.processName.setText(connection.getAppInfo().leaderAppName);
@@ -72,24 +72,24 @@ public class ConnectionAdapter extends BaseAdapter {
         holder.isSSL.setVisibility(View.GONE);
         holder.hostName.setText(null);
         holder.hostName.setVisibility(View.GONE);
-        if (BaseNetSession.TCP.equals(connection.getType())) {
-            if (connection.isSSL()) {
+        if (NatSession.TCP.equals(connection.getType())) {
+            if (connection.isHttpsSession) {
                 holder.isSSL.setVisibility(View.VISIBLE);
             }
 
-            if (connection.getUrl() != null) {
-                holder.hostName.setText(connection.getUrl());
+            if (connection.getRequestUrl() != null) {
+                holder.hostName.setText(connection.getRequestUrl());
             } else {
-                holder.hostName.setText(connection.getHostName());
+                holder.hostName.setText(connection.getRemoteHost());
             }
-            if(connection.getUrl()!=null||connection.getHostName()!=null){
+            if(connection.getRequestUrl()!=null||connection.getRemoteHost()!=null){
                 holder.hostName.setVisibility(View.VISIBLE);
             }
         }
 
         holder.netState.setText(connection.getIpAndPort());
         holder.refreshTime.setText(TimeFormatUtil.formatHHMMSSMM(connection.getRefreshTime()));
-        int sumByte = (int) (connection.getSendByteNum() + connection.getReceiveByteNum());
+        int sumByte = (int) (connection.bytesSent + connection.getReceiveByteNum());
 
         String showSum;
         if (sumByte > 1000000) {

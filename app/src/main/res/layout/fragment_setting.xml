@@ -32,8 +32,8 @@
                 <TextView
                     android:id="@+id/clear_title"
                     style="@style/setting_text_explain"
-                    android:drawableLeft="@mipmap/clear_cache"
                     android:layout_centerVertical="true"
+                    android:drawableLeft="@mipmap/clear_cache"
                     android:text="@string/clear_history" />
 
                 <CheckBox
@@ -41,10 +41,9 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:layout_toRightOf="@id/clear_title"
-                    android:text="@string/clear_current_capture"
                     android:layout_marginLeft="10dp"
-                    />
+                    android:layout_toRightOf="@id/clear_title"
+                    android:text="@string/clear_current_capture" />
             </RelativeLayout>
 
             <RelativeLayout
@@ -62,19 +61,37 @@
             </RelativeLayout>
 
             <RelativeLayout
-                android:id="@+id/to_firewall"
+                android:id="@+id/show_udp_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_btn"
                 android:padding="15dp">
 
-                <TextView
-                    style="@style/setting_text_explain"
-                    android:text="to_firewall" />
+                <CheckBox
+                    android:id="@+id/show_udp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/show_udp" />
 
 
             </RelativeLayout>
+            <RelativeLayout
+                android:id="@+id/save_udp_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_btn"
+                android:padding="15dp">
 
+                <CheckBox
+                    android:id="@+id/save_udp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="@string/save_udp" />
+
+
+            </RelativeLayout>
 
         </LinearLayout>
 

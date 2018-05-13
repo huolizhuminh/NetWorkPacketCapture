@@ -9,18 +9,19 @@ import java.nio.channels.SocketChannel;
 /**
  * Created by zengzheying on 15/12/30.
  */
-public class RawTunnel extends Tunnel {
+public class RawTcpTunnel extends TcpTunnel {
 
-	public RawTunnel(SocketChannel innerChannel, Selector selector) {
+	public RawTcpTunnel(SocketChannel innerChannel, Selector selector) {
 		super(innerChannel, selector);
 	}
 
-	public RawTunnel(InetSocketAddress serverAddress, Selector selector) throws IOException {
-		super(serverAddress, selector);
+	public RawTcpTunnel(InetSocketAddress serverAddress, Selector selector, short portKey) throws IOException {
+		super(serverAddress, selector, portKey);
+
 	}
 
 	@Override
-	protected void onConnected(ByteBuffer buffer) throws Exception {
+	protected void onConnected() throws Exception {
 		onTunnelEstablished();
 	}
 

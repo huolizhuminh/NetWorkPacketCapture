@@ -1,22 +1,20 @@
 package com.minhui.vpn.service;
 
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.VpnService;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 
 
+import com.minhui.vpn.Packet;
 import com.minhui.vpn.ProxyConfig;
+import com.minhui.vpn.UDPServer;
 import com.minhui.vpn.VPNLog;
-import com.minhui.vpn.builder.HtmlBlockingInfoBuilder;
-import com.minhui.vpn.dns.DnsPacket;
-import com.minhui.vpn.filter.BlackListFilter;
 import com.minhui.vpn.http.HttpRequestHeaderParser;
 import com.minhui.vpn.nat.NatSession;
 import com.minhui.vpn.nat.NatSessionManager;
-import com.minhui.vpn.proxy.DnsProxy;
+import com.minhui.vpn.processparse.PortHostService;
 import com.minhui.vpn.proxy.TcpProxyServer;
 import com.minhui.vpn.tcpip.IPHeader;
 import com.minhui.vpn.tcpip.TCPHeader;
@@ -24,44 +22,68 @@ import com.minhui.vpn.tcpip.UDPHeader;
 import com.minhui.vpn.utils.AppDebug;
 import com.minhui.vpn.utils.CommonMethods;
 import com.minhui.vpn.utils.DebugLog;
+import com.minhui.vpn.utils.ThreadProxy;
+import com.minhui.vpn.utils.TimeFormatUtil;
 import com.minhui.vpn.utils.VpnServiceHelper;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 /**
  * Created by zengzheying on 15/12/28.
  */
 public class FirewallVpnService extends VpnService implements Runnable {
+    public static final String ACTION_START_VPN = "com.minhui.START_VPN";
+    public static final String ACTION_CLOSE_VPN = "com.minhui.roav.CLOSE_VPN";
+    private static final String FACEBOOK_APP = "com.facebook.katana";
+    private static final String YOUTUBE_APP = "com.google.android.youtube";
+    private static final String GOOGLE_MAP_APP = "com.google.android.apps.maps";
 
+    private static final String VPN_ADDRESS = "10.0.0.2"; // Only IPv4 support for now
+    private static final String VPN_ROUTE = "0.0.0.0"; // Intercept everything
+    private static final String GOOGLE_DNS_FIRST = "8.8.8.8";
+    private static final String GOOGLE_DNS_SECOND = "8.8.4.4";
+    private static final String AMERICA = "208.67.222.222";
+    private static final String HK_DNS_SECOND = "205.252.144.228";
+    private static final String CHINA_DNS_FIRST = "114.114.114.114";
+    public static final String BROADCAST_VPN_STATE = "com.minhui.localvpn.VPN_STATE";
+    public static final String SELECT_PACKAGE_ID = "select_protect_package_id";
     private static final String TAG = "FirewallVpnService";
     private static int ID;
     private static int LOCAL_IP;
+    private final UDPHeader mUDPHeader;
+    private final ByteBuffer mDNSBuffer;
     private boolean IsRunning = false;
     private Thread mVPNThread;
     private ParcelFileDescriptor mVPNInterface;
     private TcpProxyServer mTcpProxyServer;
-    private DnsProxy mDnsProxy;
+    // private DnsProxy mDnsProxy;
     private FileOutputStream mVPNOutputStream;
 
     private byte[] mPacket;
     private IPHeader mIPHeader;
     private TCPHeader mTCPHeader;
-    private UDPHeader mUDPHeader;
-    private ByteBuffer mDNSBuffer;
     private Handler mHandler;
-    private long mSentBytes;
-    private long mReceivedBytes;
+    private ConcurrentLinkedQueue<Packet> udpQueue;
+    private FileInputStream in;
+    private UDPServer udpServer;
+    private String selectPackage;
+    public static final int MUTE_SIZE = 2560;
+    private int mReceivedBytes;
+    private int mSentBytes;
+    public static long vpnStartTime;
+    public static String lastVpnStartTimeFormat = null;
 
     public FirewallVpnService() {
         ID++;
         mHandler = new Handler();
-        mPacket = new byte[20000];
+        mPacket = new byte[MUTE_SIZE];
         mIPHeader = new IPHeader(mPacket, 0);
         //Offset = ip报文头部长度
         mTCPHeader = new TCPHeader(mPacket, 20);
@@ -69,7 +91,6 @@ public class FirewallVpnService extends VpnService implements Runnable {
         //Offset = ip报文头部长度 + udp报文头部长度 = 28
         mDNSBuffer = ((ByteBuffer) ByteBuffer.wrap(mPacket).position(28)).slice();
 
-        VpnServiceHelper.onVpnServiceCreated(this);
 
         DebugLog.i("New VPNService(%d)\n", ID);
     }
@@ -78,6 +99,7 @@ public class FirewallVpnService extends VpnService implements Runnable {
     @Override
     public void onCreate() {
         DebugLog.i("VPNService(%s) created.\n", ID);
+        VpnServiceHelper.onVpnServiceCreated(this);
         mVPNThread = new Thread(this, "VPNServiceThread");
         mVPNThread.start();
         setVpnRunningStatus(true);
@@ -118,104 +140,173 @@ public class FirewallVpnService extends VpnService implements Runnable {
 
     //建立VPN，同时监听出口流量
     private void runVPN() throws Exception {
+
         this.mVPNInterface = establishVPN();
-        this.mVPNOutputStream = new FileOutputStream(mVPNInterface.getFileDescriptor());
-        FileInputStream in = new FileInputStream(mVPNInterface.getFileDescriptor());
+        startStream();
+    }
+
+    private void startStream() throws Exception {
         int size = 0;
+        mVPNOutputStream = new FileOutputStream(mVPNInterface.getFileDescriptor());
+        in = new FileInputStream(mVPNInterface.getFileDescriptor());
         while (size != -1 && IsRunning) {
-            while ((size = in.read(mPacket)) > 0 && IsRunning) {
-                if (mDnsProxy.Stopped || mTcpProxyServer.Stopped) {
+            boolean hasWrite = false;
+            size = in.read(mPacket);
+            if (size > 0) {
+                if (mTcpProxyServer.Stopped) {
                     in.close();
                     throw new Exception("LocalServer stopped.");
                 }
-                onIPPacketReceived(mIPHeader, size);
+                hasWrite = onIPPacketReceived(mIPHeader, size);
+
             }
-            Thread.sleep(100);
+            if (!hasWrite) {
+                Packet packet = udpQueue.poll();
+                if (packet != null) {
+                    ByteBuffer bufferFromNetwork = packet.backingBuffer;
+                    bufferFromNetwork.flip();
+                    mVPNOutputStream.write(bufferFromNetwork.array());
+
+                }
+            }
+            Thread.sleep(10);
         }
         in.close();
         disconnectVPN();
     }
 
-    void onIPPacketReceived(IPHeader ipHeader, int size) throws IOException {
+    boolean onIPPacketReceived(IPHeader ipHeader, int size) throws IOException {
+        boolean hasWrite = false;
 
         switch (ipHeader.getProtocol()) {
             case IPHeader.TCP:
-                VPNLog.d(TAG, "process tcp packet");
-                TCPHeader tcpHeader = mTCPHeader;
-                tcpHeader.mOffset = ipHeader.getHeaderLength(); //矫正TCPHeader里的偏移量，使它指向真正的TCP数据地址
-                if (tcpHeader.getSourcePort() == mTcpProxyServer.Port) {
+                hasWrite = onTcpPacketReceived(ipHeader, size);
 
-                    NatSession session = NatSessionManager.getSession(tcpHeader.getDestinationPort());
-                    if (session != null) {
-                        ipHeader.setSourceIP(ipHeader.getDestinationIP());
-                        tcpHeader.setSourcePort(session.RemotePort);
-                        ipHeader.setDestinationIP(LOCAL_IP);
-
-                        CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
-                        mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
-                        mReceivedBytes += size;
-                    } else {
-                        DebugLog.i("NoSession: %s %s\n", ipHeader.toString(), tcpHeader.toString());
-                    }
-
-                } else {
-
-                    //添加端口映射
-                    int portKey = tcpHeader.getSourcePort();
-                    NatSession session = NatSessionManager.getSession(portKey);
-                    if (session == null || session.RemoteIP != ipHeader.getDestinationIP() || session.RemotePort
-                            != tcpHeader.getDestinationPort()) {
-                        session = NatSessionManager.createSession(portKey, ipHeader.getDestinationIP(), tcpHeader
-                                .getDestinationPort());
-                    }
-
-                    session.LastNanoTime = System.nanoTime();
-                    session.PacketSent++; //注意顺序
-
-                    int tcpDataSize = ipHeader.getDataLength() - tcpHeader.getHeaderLength();
-                    if (session.PacketSent == 2 && tcpDataSize == 0) {
-                        return; //丢弃tcp握手的第二个ACK报文。因为客户端发数据的时候也会带上ACK，这样可以在服务器Accept之前分析出HOST信息。
-                    }
-
-                    //分析数据，找到host
-                    if (session.BytesSent == 0 && tcpDataSize > 10) {
-                        int dataOffset = tcpHeader.mOffset + tcpHeader.getHeaderLength();
-                        HttpRequestHeaderParser.parseHttpRequestHeader(session, tcpHeader.mData, dataOffset,
-                                tcpDataSize);
-                        DebugLog.i("Host: %s\n", session.RemoteHost);
-                        DebugLog.i("Request: %s %s\n", session.Method, session.RequestUrl);
-                    }
-
-                    //转发给本地TCP服务器
-                    ipHeader.setSourceIP(ipHeader.getDestinationIP());
-                    ipHeader.setDestinationIP(LOCAL_IP);
-                    tcpHeader.setDestinationPort(mTcpProxyServer.Port);
-
-                    CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
-                    mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
-                    session.BytesSent += tcpDataSize; //注意顺序
-                    mSentBytes += size;
-                }
                 break;
             case IPHeader.UDP:
-                Log.d(TAG, "process udp packet");
-                UDPHeader udpHeader = mUDPHeader;
-                udpHeader.mOffset = ipHeader.getHeaderLength();
-                if (ipHeader.getSourceIP() == LOCAL_IP && udpHeader.getDestinationPort() == 53) {
-                    mDNSBuffer.clear();
-                    mDNSBuffer.limit(udpHeader.getTotalLength() - 8);
-                    DnsPacket dnsPacket = DnsPacket.fromBytes(mDNSBuffer);
-                    if (dnsPacket != null && dnsPacket.Header.QuestionCount > 0) {
-                        DebugLog.i("let the DnsProxy to process DNS request...\n");
-                        DebugLog.iWithTag("DNS", "Query " + dnsPacket.Questions[0].Domain);
-                        mDnsProxy.onDnsRequestReceived(ipHeader, udpHeader, dnsPacket);
-                    }
-                }
+                onUdpPacketReceived(ipHeader, size);
+
+
                 break;
             default:
                 break;
         }
+        return hasWrite;
 
+    }
+
+    private void onUdpPacketReceived(IPHeader ipHeader, int size) throws UnknownHostException {
+        TCPHeader tcpHeader = mTCPHeader;
+        short portKey = tcpHeader.getSourcePort();
+
+
+        NatSession session = NatSessionManager.getSession(portKey);
+        if (session == null || session.remoteIP != ipHeader.getDestinationIP() || session.remotePort
+                != tcpHeader.getDestinationPort()) {
+            session = NatSessionManager.createSession(portKey, ipHeader.getDestinationIP(), tcpHeader
+                    .getDestinationPort(), NatSession.UDP);
+            session.vpnStartTime = vpnStartTime;
+            ThreadProxy.getInstance().execute(new Runnable() {
+                @Override
+                public void run() {
+                    PortHostService.getInstance().refreshSessionInfo();
+                }
+            });
+        }
+
+        session.lastRefreshTime = System.currentTimeMillis();
+        session.packetSent++; //注意顺序
+
+        byte[] bytes = Arrays.copyOf(mPacket, mPacket.length);
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, 0, size);
+        byteBuffer.limit(size);
+        Packet packet = new Packet(byteBuffer);
+        udpServer.processUDPPacket(packet, portKey);
+    }
+
+    private boolean onTcpPacketReceived(IPHeader ipHeader, int size) throws IOException {
+        boolean hasWrite = false;
+        TCPHeader tcpHeader = mTCPHeader;
+        //矫正TCPHeader里的偏移量，使它指向真正的TCP数据地址
+        tcpHeader.mOffset = ipHeader.getHeaderLength();
+        if (tcpHeader.getSourcePort() == mTcpProxyServer.port) {
+            VPNLog.d(TAG, "process  tcp packet from net ");
+            NatSession session = NatSessionManager.getSession(tcpHeader.getDestinationPort());
+            if (session != null) {
+                ipHeader.setSourceIP(ipHeader.getDestinationIP());
+                tcpHeader.setSourcePort(session.remotePort);
+                ipHeader.setDestinationIP(LOCAL_IP);
+
+                CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+                mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
+                mReceivedBytes += size;
+            } else {
+                DebugLog.i("NoSession: %s %s\n", ipHeader.toString(), tcpHeader.toString());
+            }
+
+        } else {
+            VPNLog.d(TAG, "process  tcp packet to net ");
+            //添加端口映射
+            short portKey = tcpHeader.getSourcePort() ;
+            NatSession session = NatSessionManager.getSession(portKey);
+            if (session == null || session.remoteIP != ipHeader.getDestinationIP() || session.remotePort
+                    != tcpHeader.getDestinationPort()) {
+                session = NatSessionManager.createSession(portKey, ipHeader.getDestinationIP(), tcpHeader
+                        .getDestinationPort(), NatSession.TCP);
+                session.vpnStartTime = vpnStartTime;
+                ThreadProxy.getInstance().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        PortHostService instance = PortHostService.getInstance();
+                        if(instance !=null){
+                            instance.refreshSessionInfo();
+                        }
+
+                    }
+                });
+            }
+
+            session.lastRefreshTime = System.currentTimeMillis();
+            session.packetSent++; //注意顺序
+            int tcpDataSize = ipHeader.getDataLength() - tcpHeader.getHeaderLength();
+            //丢弃tcp握手的第二个ACK报文。因为客户端发数据的时候也会带上ACK，这样可以在服务器Accept之前分析出HOST信息。
+            if (session.packetSent == 2 && tcpDataSize == 0) {
+                return false;
+            }
+
+            //分析数据，找到host
+            if (session.bytesSent == 0 && tcpDataSize > 10) {
+                int dataOffset = tcpHeader.mOffset + tcpHeader.getHeaderLength();
+                HttpRequestHeaderParser.parseHttpRequestHeader(session, tcpHeader.mData, dataOffset,
+                        tcpDataSize);
+                DebugLog.i("Host: %s\n", session.remoteHost);
+                DebugLog.i("Request: %s %s\n", session.method, session.requestUrl);
+            } else if (session.bytesSent > 0
+                    && !session.isHttpsSession
+                    && session.isHttp
+                    && session.remoteHost == null
+                    && session.requestUrl==null) {
+                int dataOffset = tcpHeader.mOffset + tcpHeader.getHeaderLength();
+                session.remoteHost=HttpRequestHeaderParser.getRemoteHost(tcpHeader.mData, dataOffset,
+                        tcpDataSize);
+                session.requestUrl="http://"+session.remoteHost+"/"+session.pathUrl;
+
+
+            }
+
+            //转发给本地TCP服务器
+            ipHeader.setSourceIP(ipHeader.getDestinationIP());
+            ipHeader.setDestinationIP(LOCAL_IP);
+            tcpHeader.setDestinationPort(mTcpProxyServer.port);
+
+            CommonMethods.ComputeTCPChecksum(ipHeader, tcpHeader);
+            mVPNOutputStream.write(ipHeader.mData, ipHeader.mOffset, size);
+            //注意顺序
+            session.bytesSent += tcpDataSize;
+            mSentBytes += size;
+        }
+        hasWrite = true;
+        return hasWrite;
     }
 
     private void waitUntilPrepared() {
@@ -233,7 +324,7 @@ public class FirewallVpnService extends VpnService implements Runnable {
 
     private ParcelFileDescriptor establishVPN() throws Exception {
         Builder builder = new Builder();
-        builder.setMtu(ProxyConfig.Instance.getMTU());
+        builder.setMtu(MUTE_SIZE);
 
         DebugLog.i("setMtu: %d\n", ProxyConfig.Instance.getMTU());
 
@@ -242,41 +333,26 @@ public class FirewallVpnService extends VpnService implements Runnable {
         builder.addAddress(ipAddress.Address, ipAddress.PrefixLength);
         DebugLog.i("addAddress: %s/%d\n", ipAddress.Address, ipAddress.PrefixLength);
 
-        for (ProxyConfig.IPAddress dns : ProxyConfig.Instance.getDnsList()) {
-            builder.addDnsServer(dns.Address);
-            DebugLog.i("addDnsServer: %s\n", dns.Address);
-        }
+        builder.addRoute(VPN_ROUTE, 0);
 
-        if (ProxyConfig.Instance.getRouteList().size() > 0) {
-            for (ProxyConfig.IPAddress routeAddress : ProxyConfig.Instance.getRouteList()) {
-                builder.addRoute(routeAddress.Address, routeAddress.PrefixLength);
-                DebugLog.i("addRoute: %s/%d\n", routeAddress.Address, routeAddress.PrefixLength);
-            }
-            builder.addRoute(CommonMethods.ipIntToInet4Address(ProxyConfig.FAKE_NETWORK_IP), 16);
-            DebugLog.i("addRoute for FAKE_NETWORK: %s/%d\n", CommonMethods.ipIntToString(ProxyConfig.FAKE_NETWORK_IP),
-                    16);
-        } else {
-            builder.addRoute("0.0.0.0", 0);
-            DebugLog.i("addDefaultRoute: 0.0.0.0/0\n");
-        }
 
-        Class<?> SystemProperties = Class.forName("android.os.SystemProperties");
-        Method method = SystemProperties.getMethod("get", new Class[]{String.class});
-        ArrayList<String> servers = new ArrayList<>();
-        for (String name : new String[]{"net.dns1", "net.dns2", "net.dns3", "net.dns4",}) {
-            try {
-                String value = (String) method.invoke(null, name);
-                if (value != null && !"".equals(value) && !servers.contains(value)) {
-                    servers.add(value);
-                    builder.addRoute(value, 32); //添加路由，使得DNS查询流量也走该VPN接口
 
-                    DebugLog.i("%s=%s\n", name, value);
+        builder.addDnsServer(GOOGLE_DNS_FIRST);
+        builder.addDnsServer(CHINA_DNS_FIRST);
+        builder.addDnsServer(GOOGLE_DNS_SECOND);
+        builder.addDnsServer(AMERICA);
+        vpnStartTime = System.currentTimeMillis();
+        lastVpnStartTimeFormat = TimeFormatUtil.formatYYMMDDHHMMSS(vpnStartTime);
+        try {
+            if (selectPackage != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    builder.addAllowedApplication(selectPackage);
                 }
-            }catch (Exception e){
-
             }
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
         builder.setSession(ProxyConfig.Instance.getSessionName());
         ParcelFileDescriptor pfdDescriptor = builder.establish();
         //  notifyStatus(new VPNEvent(VPNEvent.Status.ESTABLISHED));
@@ -289,24 +365,22 @@ public class FirewallVpnService extends VpnService implements Runnable {
             DebugLog.i("VPNService(%s) work thread is Running...\n", ID);
 
             waitUntilPrepared();
-
-            ProxyConfig.Instance.setDomainFilter(new BlackListFilter());
-            ProxyConfig.Instance.setBlockingInfoBuilder(new HtmlBlockingInfoBuilder());
-            ProxyConfig.Instance.prepare();
+            udpQueue = new ConcurrentLinkedQueue<>();
 
             //启动TCP代理服务
             mTcpProxyServer = new TcpProxyServer(0);
             mTcpProxyServer.start();
-
-            mDnsProxy = new DnsProxy();
-            mDnsProxy.start();
+            udpServer = new UDPServer(this, udpQueue);
+            udpServer.start();
+            NatSessionManager.clearAllSession();
+            PortHostService.startParse(getApplicationContext());
             DebugLog.i("DnsProxy started.\n");
 
             ProxyConfig.Instance.onVpnStart(this);
             while (IsRunning) {
                 runVPN();
             }
-            ProxyConfig.Instance.onVpnEnd(this);
+
 
         } catch (InterruptedException e) {
             if (AppDebug.IS_DEBUG) {
@@ -320,6 +394,7 @@ public class FirewallVpnService extends VpnService implements Runnable {
             DebugLog.e("VpnService run catch an exception %s.\n", e);
         } finally {
             DebugLog.i("VpnService terminated");
+            ProxyConfig.Instance.onVpnEnd(this);
             dispose();
         }
     }
@@ -347,12 +422,14 @@ public class FirewallVpnService extends VpnService implements Runnable {
             mTcpProxyServer = null;
             DebugLog.i("TcpProxyServer stopped.\n");
         }
-
-        if (mDnsProxy != null) {
-            mDnsProxy.stop();
-            mDnsProxy = null;
-            DebugLog.i("DnsProxy stopped.\n");
-        }
+        udpServer.closeAllUDPConn();
+        ThreadProxy.getInstance().execute(new Runnable() {
+            @Override
+            public void run() {
+                PortHostService.getInstance().refreshSessionInfo();
+            }
+        });
+        PortHostService.stopParse(getApplicationContext());
 
         stopSelf();
         setVpnRunningStatus(false);

@@ -4,14 +4,9 @@ package com.minhui.vpn;
 import android.content.Context;
 
 
-import com.minhui.vpn.builder.BlockingInfoBuilder;
-import com.minhui.vpn.builder.DefaultBlockingInfoBuilder;
-import com.minhui.vpn.filter.DomainFilter;
 import com.minhui.vpn.utils.CommonMethods;
-import com.minhui.vpn.utils.DebugLog;
-
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by zengzheying on 15/12/28.
@@ -19,71 +14,17 @@ import java.util.ArrayList;
 public class ProxyConfig {
 
 	public static final ProxyConfig Instance = new ProxyConfig();
-
-	public final static int FAKE_NETWORK_MASK = CommonMethods.ipStringToInt("255.255.0.0");
-	public final static int FAKE_NETWORK_IP = CommonMethods.ipStringToInt("10.231.0.0");
-
-	ArrayList<IPAddress> mIpList;
-	ArrayList<IPAddress> mDnsList;
-	ArrayList<IPAddress> mRouteList;
-	int mDnsTtl;
-
-//	HashMap<String, Boolean> mDomainMap;
 	String mSessionName;
 	int mMtu;
-	DomainFilter mDomainFilter;
-	BlockingInfoBuilder mBlockingInfoBuilder;
-	private VpnStatusListener mVpnStatusListener;
+	private List<VpnStatusListener> mVpnStatusListeners=new ArrayList<>();
 
 
-	public ProxyConfig() {
-		mIpList = new ArrayList<>();
-		mDnsList = new ArrayList<>();
-		mRouteList = new ArrayList<>();
+	private ProxyConfig() {
 
-//		mDomainMap = new HashMap<>();
-//		mDomainFilter = new BlackListFilter();
+
 	}
 
-	public static boolean isFakeIP(int ip) {
-		return (ip & ProxyConfig.FAKE_NETWORK_MASK) == ProxyConfig.FAKE_NETWORK_IP;
-	}
 
-	public void setDomainFilter(DomainFilter domainFilter) {
-		mDomainFilter = domainFilter;
-	}
-
-	public void prepare() throws IllegalStateException {
-		if (mDomainFilter != null) {
-			mDomainFilter.prepare();
-		} else {
-			throw new IllegalStateException("ProxyConfig need an instance of DomainFilter," +
-					" you should set an DomainFilter object by call the setDomainFilter() method");
-		}
-	}
-
-	public IPAddress getDefaultLocalIP() {
-		if (mIpList.size() > 0) {
-			return mIpList.get(0);
-		} else {
-			return new IPAddress("10.8.0.2", 32);
-		}
-	}
-
-	public ArrayList<IPAddress> getDnsList() {
-		return mDnsList;
-	}
-
-	public ArrayList<IPAddress> getRouteList() {
-		return mRouteList;
-	}
-
-	public int getDnsTTL() {
-		if (mDnsTtl < 30) {
-			mDnsTtl = 30;
-		}
-		return mDnsTtl;
-	}
 
 	public String getSessionName() {
 		if (mSessionName == null) {
@@ -100,39 +41,34 @@ public class ProxyConfig {
 		}
 	}
 
-	public boolean needProxy(String host, int ip) {
-		boolean filter = mDomainFilter != null && mDomainFilter.needFilter(host, ip);
-		DebugLog.iWithTag("Debug", String.format("host %s ip %s %s", host, CommonMethods.ipIntToString(ip), filter));
-		return filter || isFakeIP(ip);
-	}
 
-	public void setBlockingInfoBuilder(BlockingInfoBuilder blockingInfoBuilder) {
-		mBlockingInfoBuilder = blockingInfoBuilder;
-	}
 
-	public ByteBuffer getBlockingInfo() {
-		if (mBlockingInfoBuilder != null) {
-			return mBlockingInfoBuilder.getBlockingInformation();
-		} else {
-			return DefaultBlockingInfoBuilder.get().getBlockingInformation();
-		}
+	public void registerVpnStatusListener(VpnStatusListener vpnStatusListener) {
+		mVpnStatusListeners.add(vpnStatusListener);
 	}
-
-	public void setVpnStatusListener(VpnStatusListener vpnStatusListener) {
-		mVpnStatusListener = vpnStatusListener;
+	public void unregisterVpnStatusListener(VpnStatusListener vpnStatusListener) {
+		mVpnStatusListeners.remove(vpnStatusListener);
 	}
 
 	public void onVpnStart(Context context) {
-		if (mVpnStatusListener != null) {
-			mVpnStatusListener.onVpnStart(context);
+		VpnStatusListener[] vpnStatusListeners = new VpnStatusListener[mVpnStatusListeners.size()];
+		mVpnStatusListeners.toArray(vpnStatusListeners);
+		for(VpnStatusListener listener :vpnStatusListeners){
+			listener.onVpnStart(context);
 		}
 	}
 
 
 	public void onVpnEnd(Context context) {
-		if (mVpnStatusListener != null) {
-			mVpnStatusListener.onVpnEnd(context);
+		VpnStatusListener[] vpnStatusListeners = new VpnStatusListener[mVpnStatusListeners.size()];
+		mVpnStatusListeners.toArray(vpnStatusListeners);
+		for(VpnStatusListener listener :vpnStatusListeners){
+			listener.onVpnEnd(context);
 		}
+	}
+
+	public IPAddress getDefaultLocalIP() {
+		return new IPAddress("10.8.0.2", 32);
 	}
 
 	public interface VpnStatusListener {

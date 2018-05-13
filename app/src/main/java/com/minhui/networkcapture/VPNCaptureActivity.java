@@ -18,39 +18,34 @@ package com.minhui.networkcapture;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.net.VpnService;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
-import com.minhui.vpn.LocalVPNService;
-import com.minhui.vpn.VPNConnectManager;
+import com.minhui.vpn.ProxyConfig;
+import com.minhui.vpn.utils.VpnServiceHelper;
 
-import java.security.Permission;
 import java.util.ArrayList;
 
 import static com.minhui.networkcapture.AppConstants.DATA_SAVE;
 import static com.minhui.networkcapture.AppConstants.DEFAULT_PACAGE_NAME;
 import static com.minhui.networkcapture.AppConstants.DEFAULT_PACKAGE_ID;
+import static com.minhui.vpn.utils.VpnServiceHelper.START_VPN_SERVICE_REQUEST_CODE;
 
 
 public class VPNCaptureActivity extends FragmentActivity {
@@ -59,12 +54,19 @@ public class VPNCaptureActivity extends FragmentActivity {
     private static final int REQUEST_STORAGE_PERMISSION = 104;
     private static String TAG = "VPNCaptureActivity";
 
-    private BroadcastReceiver vpnStateReceiver = new BroadcastReceiver() {
+    ProxyConfig.VpnStatusListener vpnStatusListener = new ProxyConfig.VpnStatusListener() {
+
         @Override
-        public void onReceive(Context context, Intent intent) {
-            vpnButton.setImageResource(LocalVPNService.isRunning() ? R.mipmap.ic_stop : R.mipmap.ic_start);
+        public void onVpnStart(Context context) {
+            handler.post(()->vpnButton.setImageResource(R.mipmap.ic_stop));
+        }
+
+        @Override
+        public void onVpnEnd(Context context) {
+            handler.post(()->vpnButton.setImageResource(R.mipmap.ic_start));
         }
     };
+
     private ImageView vpnButton;
     private TextView packageId;
     private SharedPreferences sharedPreferences;
@@ -74,7 +76,9 @@ public class VPNCaptureActivity extends FragmentActivity {
     private TabLayout tabLayout;
     private FragmentPagerAdapter simpleFragmentAdapter;
     private ViewPager viewPager;
-   String []needPermissions={Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE};
+    String[] needPermissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+    private Handler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,11 +87,16 @@ public class VPNCaptureActivity extends FragmentActivity {
         vpnButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (LocalVPNService.isRunning()) {
+              /*  if (LocalVPNService.isRunning()) {
                     closeVpn();
                 } else {
                     startVPN();
-                }
+                }*/
+              if(VpnServiceHelper.vpnRunningStatus()){
+                  closeVpn();
+              }else {
+                  startVPN();
+              }
             }
         });
         packageId = (TextView) findViewById(R.id.package_id);
@@ -98,8 +107,7 @@ public class VPNCaptureActivity extends FragmentActivity {
         packageId.setText(selectName != null ? selectName :
                 selectPackage != null ? selectPackage : getString(R.string.all));
         vpnButton.setEnabled(true);
-        LocalBroadcastManager.getInstance(this).registerReceiver(vpnStateReceiver,
-                new IntentFilter(LocalVPNService.BROADCAST_VPN_STATE));
+        ProxyConfig.Instance.registerVpnStatusListener(vpnStatusListener);
         //  summerState = findViewById(R.id.summer_state);
         findViewById(R.id.select_package).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,7 +116,6 @@ public class VPNCaptureActivity extends FragmentActivity {
                 startActivityForResult(intent, REQUEST_PACKAGE);
             }
         });
-
         initChildFragment();
         initViewPager();
         initTab();
@@ -119,17 +126,18 @@ public class VPNCaptureActivity extends FragmentActivity {
             if (!hasShowRecommand) {
                 sharedPreferences.edit().putBoolean(AppConstants.HAS_SHOW_RECOMMAND, true).apply();
                 showRecommand();
-            }else {
+            } else {
                 requestStoragePermission();
             }
 
-        }else {
+        } else {
             requestStoragePermission();
         }
+        handler = new Handler();
     }
 
     private void requestStoragePermission() {
-        ActivityCompat.requestPermissions(this,needPermissions,REQUEST_STORAGE_PERMISSION);
+        ActivityCompat.requestPermissions(this, needPermissions, REQUEST_STORAGE_PERMISSION);
     }
 
     private void showRecommand() {
@@ -270,42 +278,33 @@ public class VPNCaptureActivity extends FragmentActivity {
     }
 
     private void closeVpn() {
-        Intent intent = new Intent(this, LocalVPNService.class);
-        intent.setAction(LocalVPNService.ACTION_CLOSE_VPN);
-        startService(intent);
-
+        VpnServiceHelper.changeVpnRunningStatus(this,false);
     }
 
     private void startVPN() {
-
-        Intent vpnIntent = VpnService.prepare(this);
-        if (vpnIntent != null) {
-            startActivityForResult(vpnIntent, VPN_REQUEST_CODE);
-        } else {
-            onActivityResult(VPN_REQUEST_CODE, RESULT_OK, null);
-        }
-
-
+        VpnServiceHelper.changeVpnRunningStatus(this,true);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(vpnStateReceiver);
+      //  LocalBroadcastManager.getInstance(this).unregisterReceiver(vpnStateReceiver);
+        ProxyConfig.Instance.unregisterVpnStatusListener(vpnStatusListener);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == VPN_REQUEST_CODE && resultCode == RESULT_OK) {
-            Intent intent = new Intent(this, LocalVPNService.class);
+        if (requestCode == START_VPN_SERVICE_REQUEST_CODE && resultCode == RESULT_OK) {
+          /*  Intent intent = new Intent(this, LocalVPNService.class);
             intent.setAction(LocalVPNService.ACTION_START_VPN);
             if (selectPackage != null) {
                 intent.putExtra(LocalVPNService.SELECT_PACKAGE_ID, selectPackage.trim());
             }
             startService(intent);
 
-            VPNConnectManager.getInstance().resetNum();
+            VPNConnectManager.getInstance().resetNum();*/
+          VpnServiceHelper.startVpnService(getApplicationContext());
         } else if (requestCode == REQUEST_PACKAGE && resultCode == RESULT_OK) {
             PackageShowInfo showInfo = (PackageShowInfo) data.getParcelableExtra(PackageListActivity.SELECT_PACKAGE);
             if (showInfo == null) {
