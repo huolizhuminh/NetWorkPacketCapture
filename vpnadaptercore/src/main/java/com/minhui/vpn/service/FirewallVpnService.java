@@ -133,7 +133,6 @@ public class FirewallVpnService extends VpnService implements Runnable {
     }
 
 
-
     //建立VPN，同时监听出口流量
     private void runVPN() throws Exception {
 
@@ -423,9 +422,10 @@ public class FirewallVpnService extends VpnService implements Runnable {
             @Override
             public void run() {
                 PortHostService.getInstance().refreshSessionInfo();
+                PortHostService.stopParse(getApplicationContext());
             }
         });
-        PortHostService.stopParse(getApplicationContext());
+
 
         stopSelf();
         setVpnRunningStatus(false);
