@@ -35,14 +35,14 @@
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
-* 包下载地址 
+* 可抓htpps包下载地址 
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
-* 包下载链接： https://www.pgyer.com/REhj
+* 可抓htpps包下载地址 ： https://www.pgyer.com/REhj
 
-* 送人玫瑰，手有余香，请留下你的赞，点起一颗星，照亮四方人。谢谢使用！
+* 暂时只开源http的抓包代码，当本项目拥有1000颗星时，会将https抓包部分开源。
 
 ## Function:
 * It shows the state of Network Connection which is established by your selected client.
@@ -83,14 +83,16 @@ You can see the history data.
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
-* apk download
+* App that can capture https packet download QR code
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
-* apk download link： https://www.pgyer.com/REhj
+* App that can capture https packet download link： https://www.pgyer.com/REhj
 
 * Thank you for the the use of my app.
+
+* The part of code which can capture https packet will be open if the number of the stars of the project reaches 1000. 
 
 
 
