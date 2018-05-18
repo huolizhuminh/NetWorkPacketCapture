@@ -1,8 +1,7 @@
 # Doc
 
-## video 
-
-[![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
+## 视屏
+地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
 
 ## 作用：
 * 能够实时显示选择的客户端所建立的每一条网络连接，并且实时显示每条连接访问的数据包的总大小。
@@ -49,6 +48,9 @@
 * 可抓htpps包下载地址 ： https://www.pgyer.com/REhj
 
 * 暂时只开源http的抓包代码，当本项目拥有1000颗星时，会将https抓包部分开源。
+## video 
+
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
 
 ## Function:
 * It shows the state of Network Connection which is established by your selected client.
