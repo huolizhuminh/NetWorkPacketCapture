@@ -35,7 +35,7 @@
 
 ## 联系我
 * Email: 821579706@qq.com
-* QQ群：
+* 更多信息，加入QQ群：
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
@@ -86,7 +86,7 @@ You can see the history data.
 
 ## Connect me
 * Email: 821579706@qq.com
-* QQ群：
+* More information?Join us with QQ Group：
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
