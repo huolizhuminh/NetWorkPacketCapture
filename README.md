@@ -1,5 +1,9 @@
 # Doc
 
+## video 
+
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
+
 ## 作用：
 * 能够实时显示选择的客户端所建立的每一条网络连接，并且实时显示每条连接访问的数据包的总大小。
 * 能够解析并查看tcp和http的包内容
@@ -28,9 +32,7 @@
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
 
-使用视屏：
 
-<iframe height=498 width=510 src='http://player.youku.com/embed/XMzYxMjY0NjQwOA==' frameborder=0 'allowfullscreen'></iframe>
 
 ## 联系我
 * Email: 821579706@qq.com
@@ -79,9 +81,7 @@ You can see the history data.
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
 
 
-video 
 
-[![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
 ## Connect me
 * Email: 821579706@qq.com
 * QQ群：
