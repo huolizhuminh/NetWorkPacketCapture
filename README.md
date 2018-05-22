@@ -4,9 +4,12 @@
 地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
 
 ## 作用：
-* 能够实时显示选择的客户端所建立的每一条网络连接，并且实时显示每条连接访问的数据包的总大小。
-* 能够解析并查看tcp和http的包内容
-* 默认对抓包数据进行保存，并可查看保存的记录
+* 能够实时显示选择的客户端所建立的每一条网络连接。
+* 能够解析并查看https和http的包内容。
+* 默认对抓包数据进行保存，并可查看保存的记录。
+* 能够自动将抓包数据进行解析，并保存。
+* 支持https抓包，支持图片、GZIP、GIF等格式的解析。
+* 支持选择对应的APP进行抓包。
 ## 使用
 首先选择要抓包的应用，也可以选择抓手机所有的包：
 
@@ -35,19 +38,19 @@
 
 ## 联系我
 * Email: 821579706@qq.com
-* 更多信息，加入QQ群：
+* 咨询更多信息，加入QQ群：
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
-* 可抓htpps包下载地址 
+* 包下载地址 
 
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
-* 可抓htpps包下载地址 ： https://www.pgyer.com/REhj
+* 包下载地址 ： https://www.pgyer.com/REhj
 
-* 暂时只开源http的抓包代码，当本项目拥有1000颗星时，会将https抓包部分开源。
+
 ## video 
 
 [![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
