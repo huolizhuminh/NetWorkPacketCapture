@@ -204,7 +204,10 @@ public class FirewallVpnService extends VpnService implements Runnable {
             ThreadProxy.getInstance().execute(new Runnable() {
                 @Override
                 public void run() {
-                    PortHostService.getInstance().refreshSessionInfo();
+                    if(PortHostService.getInstance()!=null){
+                        PortHostService.getInstance().refreshSessionInfo();
+                    }
+
                 }
             });
         }
@@ -368,7 +371,9 @@ public class FirewallVpnService extends VpnService implements Runnable {
             udpServer = new UDPServer(this, udpQueue);
             udpServer.start();
             NatSessionManager.clearAllSession();
-            PortHostService.startParse(getApplicationContext());
+            if(PortHostService.getInstance()!=null){
+                PortHostService.startParse(getApplicationContext());
+            }
             DebugLog.i("DnsProxy started.\n");
 
             ProxyConfig.Instance.onVpnStart(this);
