@@ -1,4 +1,58 @@
 # Doc
+## video 
+
+Address: http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
+
+## Function:
+* It shows the state of Network Connection which is established by your selected client.
+* It can parse TCP packet 
+* It can save TCP packet and show you later
+
+## use
+
+
+First,Select the App your want to capture.You can also capture all the app in your devices.
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵3.png)
+
+Secondly,open the VPN ：
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵1.png)
+
+Third ,see the TCP parse Result：
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵4.png)
+
+You can choose the history data.
+
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵5.png)
+
+
+You can see the history data.
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
+
+
+
+## more
+* Blog :http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
+* Email: 821579706@qq.com
+* More information?Join us with QQ Group：
+
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
+
+* App that can capture https packet download QR code
+
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
+
+* App that can capture https packet download link： https://www.pgyer.com/REhj
+
+* Thank you for the the use of my app.
+
+* The part of code which can capture https packet will be open if the number of the stars of the project reaches 1000. 
 
 ## 视屏
 地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
@@ -36,7 +90,8 @@
 
 
 
-## 联系我
+## 更多
+* 技术方案：https://www.jianshu.com/p/ae4d433597ce
 * Email: 821579706@qq.com
 * 咨询更多信息，加入QQ群：
 
@@ -49,63 +104,6 @@
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
 * 包下载地址 ： https://www.pgyer.com/REhj
-
-
-## video 
-
-[![IMAGE ALT TEXT](https://img.youtube.com/vi/XMPiZHHbchY/0.jpg)](https://youtu.be/XMPiZHHbchY "CameraMaster")
-
-## Function:
-* It shows the state of Network Connection which is established by your selected client.
-* It can parse TCP packet 
-* It can save TCP packet and show you later
-
-## use
-
-
-First,Select the App your want to capture.You can also capture all the app in your devices.
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵3.png)
-
-Secondly,open the VPN ：
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵1.png)
-
-Third ,see the TCP parse Result：
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵4.png)
-
-You can choose the history data.
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵5.png)
-
-
-You can see the history data.
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
-
-
-
-## Connect me
-* Email: 821579706@qq.com
-* More information?Join us with QQ Group：
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
-
-* App that can capture https packet download QR code
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
-
-* App that can capture https packet download link： https://www.pgyer.com/REhj
-
-* Thank you for the the use of my app.
-
-* The part of code which can capture https packet will be open if the number of the stars of the project reaches 1000. 
-
-
 
 
 
