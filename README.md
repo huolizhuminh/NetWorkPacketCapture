@@ -36,7 +36,7 @@ You can see the history data.
 
 
 ## more
-* Blog :http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
+* Blog :https://www.jianshu.com/p/ae4d433597ce
 * Email: 821579706@qq.com
 * More information?Join us with QQ Group：
 
