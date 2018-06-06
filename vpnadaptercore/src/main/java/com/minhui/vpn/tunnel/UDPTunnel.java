@@ -190,9 +190,13 @@ public class UDPTunnel implements KeyHandler {
 
     public void close() {
         try {
-            selectionKey.cancel();
-            channel.close();
-            if(session.appInfo==null){
+            if (selectionKey != null) {
+                selectionKey.cancel();
+            }
+            if (channel != null) {
+                channel.close();
+            }
+            if (session.appInfo == null && PortHostService.getInstance() != null) {
                 PortHostService.getInstance().refreshSessionInfo();
             }
             //需要延迟一秒在保存 等到app信息完全刷新
@@ -223,7 +227,7 @@ public class UDPTunnel implements KeyHandler {
                     });
                 }
             }, 1000);
-        } catch (IOException e) {
+        } catch (Exception e) {
             VPNLog.w(TAG, "error to close UDP channel IpAndPort" + ipAndPort + ",error is " + e.getMessage());
         }
 

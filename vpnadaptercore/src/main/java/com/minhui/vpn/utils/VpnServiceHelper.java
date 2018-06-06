@@ -94,27 +94,32 @@ public class VpnServiceHelper {
         if (FirewallVpnService.lastVpnStartTimeFormat == null) {
             return null;
         }
-        File file = new File(VPNConstants.CONFIG_DIR +FirewallVpnService. lastVpnStartTimeFormat);
-        ACache aCache = ACache.get(file);
-        String[] list = file.list();
-        ArrayList<NatSession> baseNetSessions = new ArrayList<>();
-        if(list!=null){
+        try {
+            File file = new File(VPNConstants.CONFIG_DIR +FirewallVpnService. lastVpnStartTimeFormat);
+            ACache aCache = ACache.get(file);
+            String[] list = file.list();
+            ArrayList<NatSession> baseNetSessions = new ArrayList<>();
+            if(list!=null){
 
-            for (String fileName : list) {
-                NatSession netConnection = (NatSession) aCache.getAsObject(fileName);
-                baseNetSessions.add(netConnection);
+                for (String fileName : list) {
+                    NatSession netConnection = (NatSession) aCache.getAsObject(fileName);
+                    baseNetSessions.add(netConnection);
+                }
             }
+
+            PortHostService portHostService = PortHostService.getInstance();
+            if (portHostService != null) {
+                List<NatSession> aliveConnInfo = portHostService.getAndRefreshSessionInfo();
+                if (aliveConnInfo != null) {
+                    baseNetSessions.addAll(aliveConnInfo);
+                }
+            }
+            Collections.sort(baseNetSessions, new NatSession.NatSesionComparator());
+            return baseNetSessions;
+        }catch (Exception e){
+            return null;
         }
 
-        PortHostService portHostService = PortHostService.getInstance();
-        if (portHostService != null) {
-            List<NatSession> aliveConnInfo = portHostService.getAndRefreshSessionInfo();
-            if (aliveConnInfo != null) {
-                baseNetSessions.addAll(aliveConnInfo);
-            }
-        }
-        Collections.sort(baseNetSessions, new NatSession.NatSesionComparator());
-        return baseNetSessions;
     }
     public static void startVpnService(Context context) {
         if (context == null) {

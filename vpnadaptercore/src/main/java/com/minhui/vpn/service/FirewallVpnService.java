@@ -413,27 +413,36 @@ public class FirewallVpnService extends VpnService implements Runnable {
     }
 
     private synchronized void dispose() {
-        //断开VPN
-        disconnectVPN();
+        try {
+            //断开VPN
+            disconnectVPN();
 
-        //停止TCP代理服务
-        if (mTcpProxyServer != null) {
-            mTcpProxyServer.stop();
-            mTcpProxyServer = null;
-            DebugLog.i("TcpProxyServer stopped.\n");
-        }
-        udpServer.closeAllUDPConn();
-        ThreadProxy.getInstance().execute(new Runnable() {
-            @Override
-            public void run() {
-                PortHostService.getInstance().refreshSessionInfo();
-                PortHostService.stopParse(getApplicationContext());
+            //停止TCP代理服务
+            if (mTcpProxyServer != null) {
+                mTcpProxyServer.stop();
+                mTcpProxyServer = null;
+                DebugLog.i("TcpProxyServer stopped.\n");
             }
-        });
+            if(udpServer!=null){
+                udpServer.closeAllUDPConn();
+            }
+            ThreadProxy.getInstance().execute(new Runnable() {
+                @Override
+                public void run() {
+                    if(PortHostService.getInstance()!=null){
+                        PortHostService.getInstance().refreshSessionInfo();
+                    }
+                    PortHostService.stopParse(getApplicationContext());
+                }
+            });
 
 
-        stopSelf();
-        setVpnRunningStatus(false);
+            stopSelf();
+            setVpnRunningStatus(false);
+        }catch (Exception e){
+
+        }
+
     }
 
 
