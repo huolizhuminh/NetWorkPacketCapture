@@ -3,7 +3,6 @@ package com.minhui.networkcapture;
 import android.app.Application;
 import android.content.Context;
 
-import com.tencent.bugly.crashreport.CrashReport;
 
 /**
  * @author minhui.zhu
@@ -17,7 +16,6 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        CrashReport.initCrashReport(getApplicationContext(), BUGLY_ID, false);
     }
     public static Context getContext(){
         return context;
