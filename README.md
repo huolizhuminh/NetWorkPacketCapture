@@ -43,12 +43,9 @@ You can see the history data.
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
-* App that can capture https packet download QR code
 
 
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
-
-* App that can capture https packet download link： http://sj.qq.com/myapp/search.htm?kw=抓包精灵
+* App that can capture https packet download link： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
 
 * Thank you for the the use of my app.
 
@@ -98,12 +95,8 @@ You can see the history data.
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
-* 包下载地址 
 
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
-
-* 包下载地址 ： http://sj.qq.com/myapp/search.htm?kw=抓包精灵
+* 包下载地址 ： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
 
 
 
