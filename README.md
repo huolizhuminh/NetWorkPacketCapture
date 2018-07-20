@@ -48,7 +48,7 @@ You can see the history data.
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
-* App that can capture https packet download link： https://www.pgyer.com/REhj
+* App that can capture https packet download link： http://sj.qq.com/myapp/search.htm?kw=抓包精灵
 
 * Thank you for the the use of my app.
 
@@ -103,7 +103,7 @@ You can see the history data.
 
 ![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/REhj.png)
 
-* 包下载地址 ： https://www.pgyer.com/REhj
+* 包下载地址 ： http://sj.qq.com/myapp/search.htm?kw=抓包精灵
 
 
 
