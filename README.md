@@ -38,10 +38,6 @@ You can see the history data.
 ## more
 * Blog :https://www.jianshu.com/p/ae4d433597ce
 * Email: 821579706@qq.com
-* More information?Join us with QQ Group：
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
 
 
 
@@ -90,11 +86,6 @@ You can see the history data.
 ## 更多
 * 技术方案：https://www.jianshu.com/p/ae4d433597ce
 * Email: 821579706@qq.com
-* 咨询更多信息，加入QQ群：
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/安卓VPN抓包研究群二维码.png)
-
 
 * 包下载地址 ： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
 
