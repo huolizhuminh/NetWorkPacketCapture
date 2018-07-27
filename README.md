@@ -90,6 +90,7 @@ You can see the history data.
 * 包下载地址 ： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
 
 * 此项目将在star达到1000时开放htts部分的代码。
+* QQ群：692721889
 
 
 
