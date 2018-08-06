@@ -37,11 +37,11 @@ You can see the history data.
 
 ## more
 * Blog :https://www.jianshu.com/p/ae4d433597ce
-* Email: 821579706@qq.com
+* Email: sysuzhuminh@gmail.com
 
 
 
-* App that can capture https packet download link： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
+* App that can capture https packet download link： https://www.pgyer.com/REhj
 
 * Thank you for the the use of my app.
 
@@ -85,12 +85,11 @@ You can see the history data.
 
 ## 更多
 * 技术方案：https://www.jianshu.com/p/ae4d433597ce
-* Email: 821579706@qq.com
+* Email: sysuzhuminh@gmail.com
 
-* 包下载地址 ： http://sj.qq.com/myapp/detail.htm?apkName=com.minhui.networkcapture
+* 包下载地址 ： https://www.pgyer.com/REhj
 
 * 此项目将在star达到1000时开放htts部分的代码。
-* QQ群：692721889
 
 
 
