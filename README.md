@@ -41,7 +41,7 @@ You can see the history data.
 
 
 
-* App that can capture https packet download link： https://www.pgyer.com/xHw3
+* App that can capture https packet download link： https://play.google.com/store/apps/details?id=com.minhui.networkcapture.pro
 
 * Thank you for the the use of my app.
 
@@ -87,7 +87,7 @@ You can see the history data.
 * 技术方案：https://www.jianshu.com/p/ae4d433597ce
 * Email: sysuzhuminh@gmail.com
 
-* 包下载地址 ： https://www.pgyer.com/xHw3
+* 包下载地址 ： https://play.google.com/store/apps/details?id=com.minhui.networkcapture.pro
 
 * 此项目将在star达到1000时开放htts部分的代码。
 
