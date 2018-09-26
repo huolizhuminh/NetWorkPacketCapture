@@ -1,3 +1,70 @@
+## 招聘广告
+公司：oppo
+岗位：安卓工程师
+城市：深圳(后海卓越中心)、成都（成都武侯区OCG国际中心）
+薪资范围：15k到30k
+岗位职责*
+1.负责android平台客户端应用研发工作； 
+2.参与APP架构设计，可以独立承担模块设计，并主导项目； 
+3.依据项目进度与需求完成软件功能实现； 
+4.代码维护，BUG修改，性能优化； 
+
+任职要求*
+1.本科及以上学历，计算机相关专业； 
+2.3年以上Android平台应用开发经验； 
+3.独立负责过Android客户端产品的关键核心模块设计工作； 
+4.深入理解Android的消息机制，事件传递机制，熟练自定义控件，有UI优化实践及架构心得和经验更佳 
+5.熟练使用Android网络编程和数据库开发，基本功扎实，可以应对各种Android复杂问题，并迅速给出解决方案 
+6.熟悉JAVA设计模式，多线程开发，有良好的编程习惯和面向对象编程思想 
+7.有AMS,PMS相关工作经验者优化 
+8.有良好的沟通表达能力和团队合作精神
+
+## 视屏
+地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
+
+## 作用：
+* 能够实时显示选择的客户端所建立的每一条网络连接。
+* 能够解析并查看https(暂不开源)和http的包内容。
+* 默认对抓包数据进行保存，并可查看保存的记录。
+* 能够自动将抓包数据进行解析，并保存。
+* 支持https抓包(暂不开源)，支持图片、GZIP、GIF等格式的解析。
+* 支持选择对应的APP进行抓包。
+## 使用
+首先选择要抓包的应用，也可以选择抓手机所有的包：
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵3.png)
+
+打开VPN开始抓包：
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵1.png)
+
+
+查看抓包解析结果：
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵4.png)
+
+抓包工具会保存抓包记录，可根据抓包开始时间找到所有抓的包，以下是选择抓包开始时间。
+
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵5.png)
+
+
+选择相应的历史记录的链路，并查看历史抓包内容。
+
+![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
+
+
+
+## 更多
+* 技术方案：https://www.jianshu.com/p/ae4d433597ce
+* Email: sysuzhuminh@gmail.com
+
+* 包下载地址 ： https://play.google.com/store/apps/details?id=com.minhui.networkcapture.pro
+
+* 此项目将在star达到1000时开放htts部分的代码。
+
+
+
 # Doc
 ## video 
 
@@ -46,54 +113,6 @@ You can see the history data.
 * Thank you for the the use of my app.
 
 * The part of code which can capture https packet will be open if the number of the stars of the project reaches 1000. 
-
-## 视屏
-地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
-
-## 作用：
-* 能够实时显示选择的客户端所建立的每一条网络连接。
-* 能够解析并查看https(暂不开源)和http的包内容。
-* 默认对抓包数据进行保存，并可查看保存的记录。
-* 能够自动将抓包数据进行解析，并保存。
-* 支持https抓包(暂不开源)，支持图片、GZIP、GIF等格式的解析。
-* 支持选择对应的APP进行抓包。
-## 使用
-首先选择要抓包的应用，也可以选择抓手机所有的包：
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵3.png)
-
-打开VPN开始抓包：
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵1.png)
-
-
-查看抓包解析结果：
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵4.png)
-
-抓包工具会保存抓包记录，可根据抓包开始时间找到所有抓的包，以下是选择抓包开始时间。
-
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵5.png)
-
-
-选择相应的历史记录的链路，并查看历史抓包内容。
-
-![Image](https://github.com/huolizhuminh/NetWorkPacketCapture/blob/master/images/抓包精灵2.png)
-
-
-
-## 更多
-* 技术方案：https://www.jianshu.com/p/ae4d433597ce
-* Email: sysuzhuminh@gmail.com
-
-* 包下载地址 ： https://play.google.com/store/apps/details?id=com.minhui.networkcapture.pro
-
-* 此项目将在star达到1000时开放htts部分的代码。
-
-
-
-
 
 
 
