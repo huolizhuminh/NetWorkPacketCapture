@@ -1,4 +1,3 @@
-## 推荐 对于需要进行包修改和注入的需求可以参考我的前大神同事的开源项目：https://github.com/MegatronKing/HttpCanary
 ## 视屏
 地址：http://v.youku.com/v_show/id_XMzYxMjY0NjQwOA==.html?spm=a2h3j.8428770.3416059.1
 
