@@ -79,6 +79,7 @@ public class NetFileManager {
         s.useDelimiter("\n");
         while (s.hasNextLine()) {
             sTmp = s.nextLine();
+            if (sTmp.startsWith("  sl")) continue;
             netInfo = parseDataNew(sTmp);
             if (netInfo != null) {
                 netInfo.setType(type);
